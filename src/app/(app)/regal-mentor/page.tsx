@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
-import { requireAuthUser } from "@/lib/supabase/auth-server";
-import { getAuthUser, getCompanionProfile } from "@/lib/supabase/auth-server";
-import { getDashboardStats } from "@/lib/dashboard-data";
+import { requireAuthUser, getAuthUser, getCompanionProfile } from "@/lib/supabase/auth-server";
+import { createClient } from "@/lib/supabase/server";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 
 const RegalMentorClient = dynamic(
@@ -17,10 +16,20 @@ export const metadata: Metadata = {
 
 export default async function RegalMentorPage() {
   const user = await requireAuthUser();
-  const [profile, stats, authUser] = await Promise.all([
+  const supabase = await createClient();
+  const authUser = await getAuthUser();
+
+  const [profile, { count: openTaskCount }, { count: focusCount }] = await Promise.all([
     getCompanionProfile(user.id),
-    getDashboardStats(user.id),
-    getAuthUser(),
+    supabase
+      .from("companion_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .neq("status", "done"),
+    supabase
+      .from("companion_focus_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id),
   ]);
 
   const displayName =
@@ -34,8 +43,8 @@ export default async function RegalMentorPage() {
       engagementPoints={profile?.engagement_points ?? 0}
       focusMinutes={profile?.focus_minutes ?? 0}
       streak={profile?.study_streak ?? 0}
-      openTasks={stats.pendingTasks.length}
-      focusSessions={stats.focusCount}
+      openTasks={openTaskCount ?? 0}
+      focusSessions={focusCount ?? 0}
     />
   );
 }

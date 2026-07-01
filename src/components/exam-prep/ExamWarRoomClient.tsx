@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Swords,
   Loader2,
@@ -11,12 +12,37 @@ import {
   Calendar,
   Target,
   RefreshCw,
+  Map,
+  Zap,
+  FileQuestion,
+  CalendarCheck,
+  CheckSquare,
+  Globe,
+  ChevronRight,
+  Rocket,
+  ExternalLink,
 } from "lucide-react";
 import { differenceInDays, format } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
 import { askRegalAI } from "@/lib/regal-ai";
 import { readLocalJson, writeLocalJson } from "@/lib/safe-storage";
 import { sanitizeAIContent, downloadTextFile } from "@/lib/format-ai-content";
+import {
+  EXAM_REGIONS,
+  EXAM_SYSTEMS,
+  getExamSystem,
+  getExamSystemsByRegion,
+  type ExamRegionId,
+} from "@/lib/exam-systems";
+import {
+  DEFAULT_WAR_CHECKLIST,
+  serializeBriefingForApi,
+  WAR_ROOM_MODULES,
+  WAR_ROOM_STORAGE_KEY,
+  type WarRoomBriefing,
+  type WarRoomModuleId,
+  type WarRoomState,
+} from "@/lib/exam-war-room";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -32,30 +58,76 @@ type Exam = {
   exam_date: string;
 };
 
-const WAR_PLAN_KEY = (userId: string) => `regal-war-plan-content-${userId}`;
-
-type SavedWarPlan = {
-  plan: string;
-  title: string;
-  subject: string;
-  examDate: string;
-  weakAreas: string;
-  notes: string;
-  savedAt: string;
+const MODULE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Swords,
+  Map,
+  Target,
+  Zap,
+  FileQuestion,
+  CalendarCheck,
 };
+
+const DEFAULT_BRIEFING: WarRoomBriefing = {
+  examSystemId: "wassce",
+  title: "",
+  subject: "",
+  examDate: "",
+  weakAreas: "",
+  notes: "",
+  hoursPerDay: 3,
+  targetGrade: "",
+  paperNumber: "",
+};
+
+function loadState(userId: string): WarRoomState | null {
+  return readLocalJson<WarRoomState | null>(WAR_ROOM_STORAGE_KEY(userId), null);
+}
+
+function saveState(userId: string, state: WarRoomState) {
+  writeLocalJson(WAR_ROOM_STORAGE_KEY(userId), state);
+}
 
 export function ExamWarRoomClient({ userId }: { userId: string }) {
   const [exams, setExams] = useState<Exam[]>([]);
   const [selectedExamId, setSelectedExamId] = useState("");
-  const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState("");
-  const [examDate, setExamDate] = useState("");
-  const [weakAreas, setWeakAreas] = useState("");
-  const [notes, setNotes] = useState("");
-  const [plan, setPlan] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [region, setRegion] = useState<ExamRegionId>("west_africa");
+  const [briefing, setBriefing] = useState<WarRoomBriefing>(DEFAULT_BRIEFING);
+  const [modules, setModules] = useState<WarRoomState["modules"]>({});
+  const [checklist, setChecklist] = useState<{ id: string; text: string; done: boolean }[]>(
+    DEFAULT_WAR_CHECKLIST.map((text, i) => ({ id: `c-${i}`, text, done: false }))
+  );
+  const [activeModule, setActiveModule] = useState<WarRoomModuleId>("full_plan");
+  const [activeTab, setActiveTab] = useState<"briefing" | "arsenal" | "checklist">("briefing");
+  const [loadingModule, setLoadingModule] = useState<WarRoomModuleId | "all" | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const systemsInRegion = useMemo(() => getExamSystemsByRegion(region), [region]);
+  const selectedSystem = getExamSystem(briefing.examSystemId);
+
+  const daysLeft = briefing.examDate
+    ? Math.max(0, differenceInDays(new Date(briefing.examDate), new Date()))
+    : null;
+
+  const persist = useCallback(
+    (
+      patch: Partial<{
+        briefing: WarRoomBriefing;
+        modules: WarRoomState["modules"];
+        checklist: WarRoomState["checklist"];
+      }>
+    ) => {
+      const next: WarRoomState = {
+        version: 2,
+        briefing: patch.briefing ?? briefing,
+        modules: patch.modules ?? modules,
+        checklist: patch.checklist ?? checklist,
+        updatedAt: new Date().toISOString(),
+      };
+      saveState(userId, next);
+    },
+    [userId, briefing, modules, checklist]
+  );
 
   const loadExams = useCallback(async () => {
     const supabase = createClient();
@@ -70,79 +142,183 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
 
   useEffect(() => {
     void loadExams();
-    const saved = readLocalJson<SavedWarPlan | null>(WAR_PLAN_KEY(userId), null);
-    if (saved?.plan) {
-      setPlan(saved.plan);
-      setTitle(saved.title);
-      setSubject(saved.subject);
-      setExamDate(saved.examDate);
-      setWeakAreas(saved.weakAreas);
-      setNotes(saved.notes);
+    const saved = loadState(userId);
+    if (saved?.version === 2) {
+      setBriefing(saved.briefing);
+      setModules(saved.modules);
+      setChecklist(saved.checklist);
+      if (saved.briefing.examSystemId) {
+        const sys = getExamSystem(saved.briefing.examSystemId);
+        if (sys) setRegion(sys.region);
+      }
     }
   }, [loadExams, userId]);
 
   useEffect(() => {
     const exam = exams.find((e) => e.id === selectedExamId);
     if (exam) {
-      setTitle(exam.title);
-      setSubject(exam.subject ?? "");
-      setExamDate(exam.exam_date.slice(0, 10));
+      setBriefing((b) => ({
+        ...b,
+        title: exam.title,
+        subject: exam.subject ?? b.subject,
+        examDate: exam.exam_date.slice(0, 10),
+      }));
     }
   }, [selectedExamId, exams]);
 
-  const daysLeft = examDate
-    ? Math.max(0, differenceInDays(new Date(examDate), new Date()))
-    : null;
+  const updateBriefing = (patch: Partial<WarRoomBriefing>) => {
+    setBriefing((b) => {
+      const next = { ...b, ...patch };
+      persist({ briefing: next });
+      return next;
+    });
+  };
 
-  const generatePlan = async () => {
-    if (!title.trim() || !examDate) return;
-    setLoading(true);
+  const generateModule = async (moduleId: WarRoomModuleId) => {
+    if (!briefing.title.trim() || !briefing.examDate) {
+      setError("Enter exam name and date in the mission briefing first.");
+      setActiveTab("briefing");
+      return;
+    }
+    setLoadingModule(moduleId);
     setError(null);
     try {
       const { text: raw } = await askRegalAI({
-        action: "exam_war_plan",
-        topic: title.trim(),
-        subject: subject.trim() || "General",
-        text: [
-          `Exam: ${title}`,
-          `Subject: ${subject || "General"}`,
-          `Date: ${examDate}`,
-          `Days remaining: ${daysLeft ?? 0}`,
-          weakAreas && `Weak areas: ${weakAreas}`,
-          notes && `Notes: ${notes}`,
-        ]
-          .filter(Boolean)
-          .join("\n"),
+        action: "exam_war_module",
+        mode: moduleId,
+        topic: briefing.title.trim(),
+        subject: briefing.subject.trim() || "General",
+        text: serializeBriefingForApi(briefing, daysLeft ?? 7),
         count: daysLeft ?? 7,
       });
-      const cleaned = sanitizeAIContent(raw);
-      setPlan(cleaned);
-      writeLocalJson(WAR_PLAN_KEY(userId), {
-        plan: cleaned,
-        title: title.trim(),
-        subject: subject.trim(),
-        examDate,
-        weakAreas,
-        notes,
-        savedAt: new Date().toISOString(),
+      const content = sanitizeAIContent(raw);
+      const result = { id: moduleId, content, generatedAt: new Date().toISOString() };
+      setModules((m) => {
+        const next = { ...m, [moduleId]: result };
+        persist({ modules: next });
+        return next;
       });
+      setActiveModule(moduleId);
+      setActiveTab("arsenal");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not generate battle plan");
+      setError(e instanceof Error ? e.message : "Regal AI could not generate this module");
     } finally {
-      setLoading(false);
+      setLoadingModule(null);
     }
   };
 
+  const generateAllModules = async () => {
+    if (!briefing.title.trim() || !briefing.examDate) {
+      setError("Complete the mission briefing first.");
+      setActiveTab("briefing");
+      return;
+    }
+    setLoadingModule("all");
+    setError(null);
+    const order: WarRoomModuleId[] = [
+      "full_plan",
+      "syllabus_map",
+      "drills",
+      "cram_sheet",
+      "mock_prep",
+      "day_of",
+    ];
+    const accumulated: WarRoomState["modules"] = { ...modules };
+    try {
+      for (const moduleId of order) {
+        const { text: raw } = await askRegalAI({
+          action: "exam_war_module",
+          mode: moduleId,
+          topic: briefing.title.trim(),
+          subject: briefing.subject.trim() || "General",
+          text: serializeBriefingForApi(briefing, daysLeft ?? 7),
+          count: daysLeft ?? 7,
+        });
+        accumulated[moduleId] = {
+          id: moduleId,
+          content: sanitizeAIContent(raw),
+          generatedAt: new Date().toISOString(),
+        };
+        setModules({ ...accumulated });
+      }
+      persist({ modules: accumulated });
+      setActiveTab("arsenal");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Full arsenal generation failed partway");
+      persist({ modules: accumulated });
+    } finally {
+      setLoadingModule(null);
+    }
+  };
+
+  const toggleCheck = (id: string) => {
+    setChecklist((list) => {
+      const next = list.map((c) => (c.id === id ? { ...c, done: !c.done } : c));
+      persist({ checklist: next });
+      return next;
+    });
+  };
+
+  const activeContent = modules[activeModule]?.content;
+  const completedModules = WAR_ROOM_MODULES.filter((m) => modules[m.id]?.content).length;
+  const checklistDone = checklist.filter((c) => c.done).length;
+
   return (
-    <div className="page-enter max-w-4xl mx-auto">
+    <div className="page-enter max-w-6xl mx-auto space-y-6">
       <PageHeader
         title="Exam War Room"
-        description="Deploy an AI-generated battle plan — day-by-day strategy, weak-spot drills, and a last-24-hour playbook."
+        description="World-class exam prep for WASSCE, BECE, JAMB, KCSE, Matric, SAT, GCSE, university finals, and professional licensure — powered by Regal AI."
         regalAI
+        action={
+          <Link href="/tools/exam-countdown">
+            <Button variant="secondary" size="sm" className="gap-1.5">
+              <ExternalLink className="w-3.5 h-3.5" /> Exam Countdown
+            </Button>
+          </Link>
+        }
       />
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="space-y-4">
+      {/* Stats strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Days left", value: daysLeft ?? "—", tone: daysLeft !== null && daysLeft <= 3 ? "red" : "purple" },
+          { label: "Modules ready", value: `${completedModules}/6`, tone: "pink" },
+          { label: "Checklist", value: `${checklistDone}/${checklist.length}`, tone: "emerald" },
+          { label: "Study hrs/day", value: briefing.hoursPerDay, tone: "purple" },
+        ].map((s) => (
+          <Card key={s.label} className="p-3 sm:p-4 text-center">
+            <p className="text-[10px] uppercase tracking-wider text-muted">{s.label}</p>
+            <p className="text-xl sm:text-2xl font-bold text-white mt-1 tabular-nums">{s.value}</p>
+          </Card>
+        ))}
+      </div>
+
+      {/* Mobile tabs */}
+      <div className="flex gap-1 p-1 rounded-xl bg-black/30 border border-white/10 lg:hidden">
+        {(
+          [
+            { id: "briefing" as const, label: "Briefing" },
+            { id: "arsenal" as const, label: "Arsenal" },
+            { id: "checklist" as const, label: "Checklist" },
+          ] as const
+        ).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setActiveTab(t.id)}
+            className={cn(
+              "flex-1 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px]",
+              activeTab === t.id ? "bg-regal-purple-500/30 text-white" : "text-muted"
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid lg:grid-cols-5 gap-6">
+        {/* Briefing column */}
+        <div className={cn("lg:col-span-2 space-y-4", activeTab !== "briefing" && "hidden lg:block")}>
           <Card className="border-rose-400/20 space-y-4">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-xl bg-gradient-to-br from-rose-500 to-orange-600">
@@ -150,7 +326,7 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
               </div>
               <div>
                 <p className="font-semibold text-white">Mission briefing</p>
-                <p className="text-xs text-muted">Configure your exam target</p>
+                <p className="text-xs text-muted">Exam system, subject, and targets</p>
               </div>
             </div>
 
@@ -169,19 +345,125 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
             )}
 
             <div>
-              <Label>Exam name *</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Calculus II Final" />
+              <Label className="flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5" /> Region
+              </Label>
+              <Select
+                value={region}
+                onChange={(e) => {
+                  const r = e.target.value as ExamRegionId;
+                  setRegion(r);
+                  const first = getExamSystemsByRegion(r)[0];
+                  if (first) updateBriefing({ examSystemId: first.id });
+                }}
+              >
+                {EXAM_REGIONS.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.label}
+                  </option>
+                ))}
+              </Select>
+              <p className="text-[10px] text-muted mt-1">
+                {EXAM_REGIONS.find((r) => r.id === region)?.description}
+              </p>
             </div>
+
+            <div>
+              <Label>Exam system *</Label>
+              <Select
+                value={briefing.examSystemId}
+                onChange={(e) => updateBriefing({ examSystemId: e.target.value })}
+              >
+                {systemsInRegion.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.shortName} — {s.countries.slice(0, 2).join(", ")}
+                  </option>
+                ))}
+                <optgroup label="All systems">
+                  {EXAM_SYSTEMS.filter((s) => !systemsInRegion.some((x) => x.id === s.id))
+                    .slice(0, 0)
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.shortName}
+                      </option>
+                    ))}
+                </optgroup>
+              </Select>
+              {selectedSystem && (
+                <p className="text-[11px] text-muted mt-1.5 leading-relaxed">{selectedSystem.description}</p>
+              )}
+            </div>
+
+            <div>
+              <Label>Exam name *</Label>
+              <Input
+                value={briefing.title}
+                onChange={(e) => updateBriefing({ title: e.target.value })}
+                placeholder={selectedSystem ? `${selectedSystem.shortName} — Core Mathematics` : "Exam title"}
+              />
+            </div>
+
+            <div>
+              <Label>Subject / paper focus</Label>
+              <Select
+                value={briefing.subject}
+                onChange={(e) => updateBriefing({ subject: e.target.value })}
+              >
+                <option value="">Select or type below</option>
+                {(selectedSystem?.typicalSubjects ?? ["General"]).map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </Select>
+              <Input
+                className="mt-2"
+                value={briefing.subject}
+                onChange={(e) => updateBriefing({ subject: e.target.value })}
+                placeholder="e.g. Core Mathematics Paper 2"
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Subject</Label>
-                <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Mathematics" />
+                <Label>Exam date *</Label>
+                <Input
+                  type="date"
+                  value={briefing.examDate}
+                  onChange={(e) => updateBriefing({ examDate: e.target.value })}
+                />
               </div>
               <div>
-                <Label>Exam date *</Label>
-                <Input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
+                <Label>Hours/day</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={14}
+                  value={briefing.hoursPerDay}
+                  onChange={(e) => updateBriefing({ hoursPerDay: Number(e.target.value) || 3 })}
+                />
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Target grade</Label>
+                <Input
+                  value={briefing.targetGrade}
+                  onChange={(e) => updateBriefing({ targetGrade: e.target.value })}
+                  placeholder="A1, 320 JAMB, 7.0 IELTS..."
+                />
+              </div>
+              <div>
+                <Label>Paper / component</Label>
+                <Input
+                  value={briefing.paperNumber}
+                  onChange={(e) => updateBriefing({ paperNumber: e.target.value })}
+                  placeholder="Paper 1, Section B..."
+                />
+              </div>
+            </div>
+
             {daysLeft !== null && (
               <div
                 className={cn(
@@ -194,63 +476,142 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
                 )}
               >
                 <Calendar className="w-4 h-4 shrink-0" />
-                {daysLeft === 0 ? "Exam is today — deploy plan now" : `${daysLeft} days until exam`}
+                {daysLeft === 0 ? "Exam is today — deploy arsenal now" : `${daysLeft} days until exam`}
               </div>
             )}
+
+            {selectedSystem && (
+              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/8 text-[11px] text-muted space-y-1">
+                <p><strong className="text-white/80">Format:</strong> {selectedSystem.format}</p>
+                <p><strong className="text-white/80">Scoring:</strong> {selectedSystem.scoringNotes}</p>
+              </div>
+            )}
+
             <div>
               <Label>Weak areas</Label>
               <Textarea
                 rows={2}
-                value={weakAreas}
-                onChange={(e) => setWeakAreas(e.target.value)}
-                placeholder="Integration, series convergence, word problems..."
+                value={briefing.weakAreas}
+                onChange={(e) => updateBriefing({ weakAreas: e.target.value })}
+                placeholder="Topics or question types you struggle with..."
               />
             </div>
             <div>
               <Label>Additional context</Label>
               <Textarea
                 rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Open book, formula sheet allowed, 40% of grade..."
+                value={briefing.notes}
+                onChange={(e) => updateBriefing({ notes: e.target.value })}
+                placeholder="Retake, access arrangements, open book, CA weighting..."
               />
             </div>
+
             {error && (
-              <p className="text-sm text-red-300 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
-                {error}
-              </p>
+              <p className="text-sm text-red-300 p-3 rounded-xl bg-red-500/10 border border-red-500/20">{error}</p>
             )}
-            <Button onClick={generatePlan} disabled={loading || !title.trim() || !examDate} className="w-full" size="lg">
-              {loading ? (
+
+            <Button
+              onClick={() => void generateAllModules()}
+              disabled={loadingModule !== null || !briefing.title.trim() || !briefing.examDate}
+              className="w-full gap-2"
+              size="lg"
+            >
+              {loadingModule !== null ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" /> Generating battle plan...
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  {loadingModule === "all" ? "Deploying full arsenal..." : `Generating ${loadingModule}...`}
                 </>
               ) : (
                 <>
-                  <Swords className="w-5 h-5" /> Generate war plan
+                  <Rocket className="w-5 h-5" /> Deploy full arsenal (all 6 modules)
                 </>
               )}
             </Button>
           </Card>
         </div>
 
-        <div>
-          {plan ? (
+        {/* Arsenal column */}
+        <div className={cn("lg:col-span-3 space-y-4", activeTab !== "arsenal" && "hidden lg:block")}>
+          <Card className="border-regal-purple-400/20 p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-4 h-4 text-regal-pink" />
+              <p className="text-sm font-semibold text-white">Regal AI Arsenal</p>
+              <RegalAIBadge className="ml-auto" />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-2">
+              {WAR_ROOM_MODULES.map((mod) => {
+                const Icon = MODULE_ICONS[mod.icon] ?? Target;
+                const ready = Boolean(modules[mod.id]?.content);
+                const isLoading = loadingModule === mod.id || (loadingModule === "all" && !ready);
+                return (
+                  <button
+                    key={mod.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveModule(mod.id);
+                      if (modules[mod.id]?.content) return;
+                    }}
+                    className={cn(
+                      "text-left p-3 rounded-xl border transition-all",
+                      activeModule === mod.id
+                        ? "border-regal-purple-400/50 bg-regal-purple-500/15"
+                        : "border-white/10 hover:border-regal-purple-400/30 bg-white/[0.02]"
+                    )}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className={cn("p-1.5 rounded-lg", ready ? "bg-emerald-500/20" : "bg-white/10")}>
+                        {isLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-regal-pink" />
+                        ) : (
+                          <Icon className="w-4 h-4 text-regal-purple-300" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-white flex items-center gap-1">
+                          {mod.label}
+                          {ready && <Check className="w-3 h-3 text-emerald-400" />}
+                        </p>
+                        <p className="text-[10px] text-muted mt-0.5 line-clamp-2">{mod.description}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 h-8 px-2"
+                        disabled={loadingModule !== null}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void generateModule(mod.id);
+                        }}
+                      >
+                        {ready ? <RefreshCw className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                      </Button>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+
+          {activeContent ? (
             <Card className="border-regal-purple-400/20">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                <div className="flex items-center gap-2">
-                  <RegalAIBadge />
-                  <span className="text-sm font-semibold text-white">Battle plan</span>
-                </div>
+                <p className="text-sm font-semibold text-white">
+                  {WAR_ROOM_MODULES.find((m) => m.id === activeModule)?.label}
+                </p>
                 <div className="flex gap-2">
-                  <Button variant="secondary" size="sm" onClick={generatePlan} disabled={loading}>
-                    <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void generateModule(activeModule)}
+                    disabled={loadingModule !== null}
+                  >
+                    <RefreshCw className={cn("w-3.5 h-3.5", loadingModule === activeModule && "animate-spin")} />
                   </Button>
                   <Button
                     variant="secondary"
                     size="sm"
                     onClick={() => {
-                      void navigator.clipboard.writeText(plan);
+                      void navigator.clipboard.writeText(activeContent);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}
@@ -261,28 +622,73 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
                     variant="secondary"
                     size="sm"
                     onClick={() =>
-                      downloadTextFile(plan, `${title.replace(/\s+/g, "-").toLowerCase()}-war-plan.md`)
+                      downloadTextFile(
+                        activeContent,
+                        `${briefing.title.replace(/\s+/g, "-").toLowerCase()}-${activeModule}.md`
+                      )
                     }
                   >
                     <Download className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
-              <div className="max-h-[70vh] overflow-y-auto pr-1">
-                <MarkdownContent content={plan} />
+              <div className="max-h-[65vh] overflow-y-auto pr-1">
+                <MarkdownContent content={activeContent} />
               </div>
             </Card>
           ) : (
-            <Card className="py-16 text-center border-dashed border-white/10">
+            <Card className="py-14 text-center border-dashed border-white/10">
               <Target className="w-10 h-10 text-white/20 mx-auto mb-3" />
-              <p className="text-sm text-white font-medium">No battle plan yet</p>
-              <p className="text-xs text-muted mt-1 max-w-xs mx-auto">
-                Enter your exam details and deploy an AI strategy with daily schedules and drill lists.
+              <p className="text-sm text-white font-medium">No module selected</p>
+              <p className="text-xs text-muted mt-1 max-w-sm mx-auto">
+                Complete your briefing, then deploy the full arsenal or generate modules individually.
               </p>
             </Card>
           )}
         </div>
       </div>
+
+      {/* Checklist */}
+      <Card
+        className={cn(
+          "border-white/10",
+          activeTab !== "checklist" && "hidden lg:block"
+        )}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <CheckSquare className="w-4 h-4 text-emerald-400" />
+          <p className="font-semibold text-white">Exam day checklist</p>
+          <span className="text-xs text-muted ml-auto">
+            {checklistDone}/{checklist.length} done
+          </span>
+        </div>
+        <ul className="grid sm:grid-cols-2 gap-2">
+          {checklist.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => toggleCheck(item.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 p-3 rounded-xl border text-left text-sm transition-colors min-h-[44px]",
+                  item.done
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+                    : "border-white/10 hover:border-regal-purple-400/30 text-white/85"
+                )}
+              >
+                <span
+                  className={cn(
+                    "w-5 h-5 rounded-md border flex items-center justify-center shrink-0",
+                    item.done ? "bg-emerald-500 border-emerald-400" : "border-white/20"
+                  )}
+                >
+                  {item.done && <Check className="w-3 h-3 text-white" />}
+                </span>
+                {item.text}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </div>
   );
 }

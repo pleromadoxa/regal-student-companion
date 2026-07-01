@@ -10,7 +10,7 @@ const ExamWarRoomClient = dynamic(
 
 export const metadata: Metadata = {
   title: "Exam War Room",
-  description: "AI-generated exam battle plans and cram strategies.",
+  description: "AI battle plans for WASSCE, BECE, JAMB, KCSE, SAT, GCSE, university finals, and 30+ exam systems worldwide.",
 };
 
 export default async function ExamPrepPage() {

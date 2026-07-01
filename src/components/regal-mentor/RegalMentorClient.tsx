@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Send,
   Trash2,
@@ -13,25 +14,45 @@ import {
   Target,
   BookOpen,
   Flame,
+  Trophy,
+  CheckSquare,
+  Timer,
 } from "lucide-react";
 import { askRegalAI, REGAL_AI_NAME } from "@/lib/regal-ai";
 import { sanitizeAIContent } from "@/lib/format-ai-content";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { PageHeader, StatCard } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { cn } from "@/lib/utils";
 
 type Message = { id: string; role: "user" | "ai"; text: string; at: string };
 
-const PROMPTS = [
-  "What should I focus on today based on my goals?",
-  "Help me build a revision plan for this week",
-  "How do I balance part-time work and studying?",
-  "What's the best way to prepare for multiple exams?",
-  "Review my study habits and suggest improvements",
-  "How can I write stronger academic arguments?",
+const PROMPT_GROUPS: { label: string; prompts: string[] }[] = [
+  {
+    label: "Today",
+    prompts: [
+      "What should I focus on today based on my stats?",
+      "Give me a 2-hour study block plan for right now",
+    ],
+  },
+  {
+    label: "Exams",
+    prompts: [
+      "Help me build a revision plan for this week",
+      "What's the best way to prepare for multiple exams?",
+    ],
+  },
+  {
+    label: "Skills",
+    prompts: [
+      "Review my study habits and suggest improvements",
+      "How can I write stronger academic arguments?",
+      "How do I balance part-time work and studying?",
+    ],
+  },
 ];
 
 export function RegalMentorClient({
@@ -58,7 +79,9 @@ export function RegalMentorClient({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const firstName = displayName.split(" ")[0];
 
   const contextBlock = [
     `Student: ${displayName}`,
@@ -67,7 +90,7 @@ export function RegalMentorClient({
     `Focus minutes: ${focusMinutes}`,
     `Streak: ${streak} days`,
     `Open tasks: ${openTasks}`,
-    `Focus sessions: ${focusSessions}`,
+    `Focus sessions completed: ${focusSessions}`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -103,7 +126,7 @@ export function RegalMentorClient({
       setLoading(true);
       try {
         const history = [...messages, userMsg]
-          .slice(-8)
+          .slice(-10)
           .map((m) => `${m.role === "user" ? "Student" : "Mentor"}: ${m.text}`)
           .join("\n\n");
         const { text: raw } = await askRegalAI({
@@ -138,14 +161,26 @@ export function RegalMentorClient({
   );
 
   return (
-    <div className="page-enter max-w-4xl mx-auto">
+    <div className="page-enter max-w-5xl mx-auto">
       <PageHeader
         title="Regal Mentor"
-        description={`Your personal ${REGAL_AI_NAME} academic coach — context-aware guidance powered by your profile, streak, and goals.`}
+        description={`Your personal ${REGAL_AI_NAME} academic coach — context-aware guidance powered by your profile, streak, tasks, and focus history.`}
         regalAI
+        action={
+          <Button variant="secondary" size="sm" className="lg:hidden" onClick={() => setShowSidebar(!showSidebar)}>
+            Context
+          </Button>
+        }
       />
 
-      <div className="grid lg:grid-cols-[1fr_240px] gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <StatCard label="Streak" value={`${streak}d`} icon={Flame} accent="amber" href="/focus" />
+        <StatCard label="Focus min" value={focusMinutes} icon={Timer} accent="purple" href="/focus" />
+        <StatCard label="Open tasks" value={openTasks} icon={CheckSquare} accent="emerald" href="/tasks" />
+        <StatCard label="Points" value={engagementPoints} icon={Trophy} accent="pink" href="/leaderboard" />
+      </div>
+
+      <div className="grid lg:grid-cols-[1fr_260px] gap-6">
         <Card className="flex flex-col min-h-[520px] border-regal-purple-400/20 p-0 overflow-hidden">
           <div className="px-4 py-3 border-b border-white/8 bg-gradient-to-r from-regal-purple-500/10 to-regal-pink/5 flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-400 to-regal-purple-600">
@@ -157,15 +192,15 @@ export function RegalMentorClient({
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[360px] max-h-[50vh]">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[360px] max-h-[55vh]">
             {messages.length === 0 && (
               <div className="text-center py-12 px-4">
                 <Crown className="w-10 h-10 text-regal-purple-400/50 mx-auto mb-3" />
                 <p className="text-sm text-white/70 font-medium">
-                  Hi {displayName.split(" ")[0]} — I&apos;m your Regal Mentor.
+                  Hi {firstName} — I&apos;m your Regal Mentor.
                 </p>
                 <p className="text-xs text-muted mt-1 max-w-sm mx-auto">
-                  Ask anything about studying, exams, essays, time management, or your academic path.
+                  Ask about studying, exams, essays, time management, or your academic path. I see your streak, tasks, and focus history.
                 </p>
               </div>
             )}
@@ -173,14 +208,18 @@ export function RegalMentorClient({
               <div key={m.id} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
                 <div
                   className={cn(
-                    "max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm group relative",
+                    "max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm group relative",
                     m.role === "user"
                       ? "bg-regal-purple-500/25 text-white"
                       : "bg-white/[0.06] text-white/90 border border-white/8"
                   )}
                 >
                   {m.role === "ai" && <RegalAIBadge className="mb-1.5 scale-90 origin-left" />}
-                  <p className="whitespace-pre-wrap leading-relaxed">{m.text}</p>
+                  {m.role === "ai" ? (
+                    <MarkdownContent content={m.text} className="text-sm prose-invert max-w-none" />
+                  ) : (
+                    <p className="whitespace-pre-wrap leading-relaxed">{m.text}</p>
+                  )}
                   {m.role === "ai" && (
                     <button
                       type="button"
@@ -199,8 +238,9 @@ export function RegalMentorClient({
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-white/[0.06] rounded-2xl px-4 py-3 border border-white/8">
+                <div className="bg-white/[0.06] rounded-2xl px-4 py-3 border border-white/8 flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin text-regal-purple-400" />
+                  <span className="text-xs text-muted">Regal Mentor is thinking...</span>
                 </div>
               </div>
             )}
@@ -229,33 +269,42 @@ export function RegalMentorClient({
           </div>
         </Card>
 
-        <aside className="space-y-4">
+        <aside className={cn("space-y-4", !showSidebar && "hidden lg:block")}>
           <Card className="p-4 space-y-3">
             <p className="text-xs font-bold text-white uppercase tracking-wider">Your context</p>
             <div className="space-y-2 text-xs text-muted">
               <p className="flex items-center gap-2"><Flame className="w-3.5 h-3.5 text-orange-400" /> {streak} day streak</p>
               <p className="flex items-center gap-2"><Target className="w-3.5 h-3.5 text-emerald-400" /> {focusMinutes} focus min</p>
               <p className="flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 text-regal-pink" /> {engagementPoints} pts</p>
+              <p className="flex items-center gap-2"><CheckSquare className="w-3.5 h-3.5 text-sky-400" /> {openTasks} open tasks</p>
               {major && <p className="flex items-center gap-2"><BookOpen className="w-3.5 h-3.5 text-sky-400" /> {major}</p>}
             </div>
-          </Card>
-          <Card className="p-4">
-            <p className="text-xs font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Lightbulb className="w-3.5 h-3.5 text-amber-300" /> Try asking
-            </p>
-            <div className="space-y-1.5">
-              {PROMPTS.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => send(p)}
-                  className="w-full text-left text-[11px] text-white/50 hover:text-white hover:bg-white/5 rounded-lg px-2 py-1.5 transition-colors"
-                >
-                  {p}
-                </button>
-              ))}
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
+              <Link href="/tasks" className="text-[10px] text-regal-purple-300 hover:text-white">Tasks →</Link>
+              <Link href="/leaderboard" className="text-[10px] text-regal-purple-300 hover:text-white">Leaderboard →</Link>
+              <Link href="/exam-prep" className="text-[10px] text-regal-purple-300 hover:text-white">Exam prep →</Link>
             </div>
           </Card>
+          {PROMPT_GROUPS.map((group) => (
+            <Card key={group.label} className="p-4">
+              <p className="text-xs font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-300" /> {group.label}
+              </p>
+              <div className="space-y-1.5">
+                {group.prompts.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => send(p)}
+                    disabled={loading}
+                    className="w-full text-left text-[11px] text-white/50 hover:text-white hover:bg-white/5 rounded-lg px-2 py-1.5 transition-colors disabled:opacity-50"
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </Card>
+          ))}
           {messages.length > 0 && (
             <Button variant="secondary" size="sm" className="w-full" onClick={() => setMessages([])}>
               <Trash2 className="w-3.5 h-3.5" /> Clear chat

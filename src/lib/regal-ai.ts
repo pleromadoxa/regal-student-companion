@@ -83,4 +83,5 @@ export const REGAL_AI_ACTIONS = {
   student_boost: "student_boost",
   mentor_chat: "mentor_chat",
   exam_war_plan: "exam_war_plan",
+  exam_war_module: "exam_war_module",
 } as const;

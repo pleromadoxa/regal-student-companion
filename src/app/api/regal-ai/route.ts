@@ -12,6 +12,12 @@ import {
   RESEARCH_TIMELINE_PROMPT,
   regalSystemInstruction,
 } from "@/lib/regal-ai-system";
+import {
+  buildModulePrompt,
+  moduleSystemRole,
+  parseBriefingFromText,
+  type WarRoomModuleId,
+} from "@/lib/exam-war-room";
 import { estimateAiDetectionScore, sanitizeAIContent } from "@/lib/format-ai-content";
 import { clientIp, rateLimitMemory } from "@/lib/security";
 import {
@@ -62,7 +68,7 @@ export async function POST(request: NextRequest) {
       ? { base64: imageBase64 as string, mimeType: imageMimeType as string }
       : undefined;
 
-  if (action === "exam_war_plan") {
+  if (action === "exam_war_plan" || action === "exam_war_module") {
     const gate = await checkFeatureAccess(supabase, user.id, "examWarRoom");
     if (!gate.ok) {
       return NextResponse.json(
@@ -409,43 +415,31 @@ Rules:
         break;
       case "exam_war_plan":
         result = await ask(
-          `Create a comprehensive EXAM WAR ROOM battle plan:
-
-${text}
-
-Days until exam: ${count ?? 7}
-
-Format as markdown with these sections:
-
-## Mission Overview
-(2-3 sentences on strategy given time remaining)
-
-## Day-by-Day Battle Schedule
-(One ### Day N — [date/focus] section for each day until exam with specific tasks, hours, and priorities)
-
-## Weak Spot Drills
-(Targeted exercises for weak areas listed)
-
-## High-Yield Topics
-(What to prioritize if time runs short)
-
-## Practice & Review Protocol
-(Past papers, self-testing, active recall schedule)
-
-## Last 24 Hours Playbook
-(Hour-by-hour or block schedule for final day)
-
-## Exam Day Checklist
-(What to bring, mindset, timing)
-
-Rules:
-- Personalize to the exam, subject, and days remaining
-- Be specific and actionable — no vague "study hard"
-- NO meta commentary, NO code fences, NO emoji
-- Professional military-style clarity but student-friendly`,
-          "Elite exam strategist for students under deadline pressure."
+          buildModulePrompt("full_plan", parseBriefingFromText(text ?? "", subject, topic), count ?? 7),
+          moduleSystemRole("full_plan")
         );
         break;
+      case "exam_war_module": {
+        const moduleId = (mode ?? "full_plan") as WarRoomModuleId;
+        const validModules: WarRoomModuleId[] = [
+          "full_plan",
+          "drills",
+          "cram_sheet",
+          "mock_prep",
+          "syllabus_map",
+          "day_of",
+        ];
+        const resolved = validModules.includes(moduleId) ? moduleId : "full_plan";
+        result = await ask(
+          buildModulePrompt(
+            resolved,
+            parseBriefingFromText(text ?? "", subject, topic),
+            count ?? 7
+          ),
+          moduleSystemRole(resolved)
+        );
+        break;
+      }
       default:
         return NextResponse.json({ error: "Unknown Regal AI action" }, { status: 400 });
     }

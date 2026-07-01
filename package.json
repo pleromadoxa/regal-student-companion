@@ -14,7 +14,8 @@
     "setup:cloudflare": "node scripts/setup-cloudflare.mjs",
     "setup:r2": "node scripts/setup-r2.mjs",
     "setup:pages": "node scripts/setup-pages.mjs",
-    "setup:worker-domain": "node scripts/setup-worker-domain.mjs"
+    "setup:worker-domain": "node scripts/setup-worker-domain.mjs",
+    "test:exam-war-room": "npx tsx scripts/test-exam-war-room.ts"
   },
   "dependencies": {
     "@google/genai": "^2.8.0",

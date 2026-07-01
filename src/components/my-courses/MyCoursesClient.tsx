@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
   BookOpen,
@@ -11,6 +12,10 @@ import {
   RefreshCw,
   Sparkles,
   Trash2,
+  Search,
+  Pencil,
+  Brain,
+  FileQuestion,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { askRegalAI } from "@/lib/regal-ai";
@@ -26,13 +31,12 @@ import {
 } from "@/lib/cv-courses-storage";
 import { downloadTextFile, sanitizeAIContent } from "@/lib/format-ai-content";
 import type { CourseSubject, SubjectMaterial, UserCourse } from "@/types/cv-courses";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { PageHeader, StatCard, EmptyState } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
-import { EmptyState } from "@/components/ui/PageHeader";
 import { cn } from "@/lib/utils";
 
 async function generateCourseMaterial(opts: {
@@ -80,12 +84,30 @@ export function MyCoursesClient({ userId }: { userId: string }) {
 
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [showSubjectForm, setShowSubjectForm] = useState(false);
+  const [editCourseId, setEditCourseId] = useState<string | null>(null);
+  const [editSubjectId, setEditSubjectId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [courseDraft, setCourseDraft] = useState<Partial<UserCourse>>({});
   const [subjectDraft, setSubjectDraft] = useState<Partial<CourseSubject>>({});
 
   const activeCourse = courses.find((c) => c.id === activeCourseId) ?? null;
   const activeSubject = subjects.find((s) => s.id === activeSubjectId) ?? null;
   const courseSubjects = subjects.filter((s) => s.course_id === activeCourseId);
+
+  const stats = useMemo(() => {
+    const ready = subjects.filter((s) => s.material_status === "ready").length;
+    return { courses: courses.length, subjects: subjects.length, ready };
+  }, [courses.length, subjects]);
+
+  const filteredCourses = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return courses;
+    return courses.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.institution ?? "").toLowerCase().includes(q)
+    );
+  }, [courses, search]);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -162,24 +184,53 @@ export function MyCoursesClient({ userId }: { userId: string }) {
 
   const addCourse = async () => {
     if (!courseDraft.name?.trim()) return;
-    const course: UserCourse = {
-      id: crypto.randomUUID(),
-      user_id: userId,
-      name: courseDraft.name.trim(),
-      institution: courseDraft.institution?.trim() || null,
-      level: courseDraft.level?.trim() || null,
-      semester: courseDraft.semester?.trim() || null,
-      description: courseDraft.description?.trim() || null,
-    };
-    await saveCourse(supabase, course);
-    setCourses((prev) => [course, ...prev]);
+    if (editCourseId) {
+      const existing = courses.find((c) => c.id === editCourseId);
+      if (!existing) return;
+      const course: UserCourse = {
+        ...existing,
+        name: courseDraft.name.trim(),
+        institution: courseDraft.institution?.trim() || null,
+        level: courseDraft.level?.trim() || null,
+        semester: courseDraft.semester?.trim() || null,
+        description: courseDraft.description?.trim() || null,
+      };
+      await saveCourse(supabase, course);
+      setCourses((prev) => prev.map((c) => (c.id === editCourseId ? course : c)));
+      setEditCourseId(null);
+    } else {
+      const course: UserCourse = {
+        id: crypto.randomUUID(),
+        user_id: userId,
+        name: courseDraft.name.trim(),
+        institution: courseDraft.institution?.trim() || null,
+        level: courseDraft.level?.trim() || null,
+        semester: courseDraft.semester?.trim() || null,
+        description: courseDraft.description?.trim() || null,
+      };
+      await saveCourse(supabase, course);
+      setCourses((prev) => [course, ...prev]);
+      setActiveCourseId(course.id);
+    }
     setShowCourseForm(false);
     setCourseDraft({});
-    setActiveCourseId(course.id);
   };
 
   const addSubject = async () => {
     if (!activeCourse || !subjectDraft.name?.trim()) return;
+    if (editSubjectId) {
+      const existing = subjects.find((s) => s.id === editSubjectId);
+      if (!existing) return;
+      const subject: CourseSubject = {
+        ...existing,
+        name: subjectDraft.name.trim(),
+        code: subjectDraft.code?.trim() || null,
+        description: subjectDraft.description?.trim() || null,
+      };
+      await saveSubject(supabase, subject);
+      setSubjects((prev) => prev.map((s) => (s.id === editSubjectId ? subject : s)));
+      setEditSubjectId(null);
+    } else {
     const subject: CourseSubject = {
       id: crypto.randomUUID(),
       course_id: activeCourse.id,
@@ -191,10 +242,11 @@ export function MyCoursesClient({ userId }: { userId: string }) {
     };
     await saveSubject(supabase, subject);
     setSubjects((prev) => [...prev, subject]);
-    setShowSubjectForm(false);
-    setSubjectDraft({});
     setActiveSubjectId(subject.id);
     void runGeneration(activeCourse, subject);
+    }
+    setShowSubjectForm(false);
+    setSubjectDraft({});
   };
 
   const removeCourse = async (id: string) => {
@@ -248,7 +300,17 @@ export function MyCoursesClient({ userId }: { userId: string }) {
               {activeSubject.code && ` · ${activeSubject.code}`}
             </p>
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex gap-2 shrink-0 flex-wrap">
+            <Link href={`/tools/quiz?topic=${encodeURIComponent(activeSubject.name)}`}>
+              <Button variant="secondary" size="sm">
+                <FileQuestion className="w-4 h-4" /> Quiz
+              </Button>
+            </Link>
+            <Link href={`/tools/tutor?subject=${encodeURIComponent(activeSubject.name)}`}>
+              <Button variant="secondary" size="sm">
+                <Brain className="w-4 h-4" /> Tutor
+              </Button>
+            </Link>
             <Button
               variant="secondary"
               size="sm"
@@ -350,10 +412,22 @@ export function MyCoursesClient({ userId }: { userId: string }) {
           }
           regalAI
           action={
-            <Button onClick={() => setShowSubjectForm(true)}>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setEditCourseId(activeCourse.id);
+                setCourseDraft(activeCourse);
+                setShowCourseForm(true);
+              }}
+            >
+              <Pencil className="w-4 h-4" /> Edit
+            </Button>
+            <Button onClick={() => { setEditSubjectId(null); setSubjectDraft({}); setShowSubjectForm(true); }}>
               <Plus className="w-4 h-4" /> Add subject
             </Button>
-          }
+          </div>
+        }
         />
 
         {activeCourse.description && (
@@ -386,6 +460,18 @@ export function MyCoursesClient({ userId }: { userId: string }) {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
+                    setEditSubjectId(subject.id);
+                    setSubjectDraft(subject);
+                    setShowSubjectForm(true);
+                  }}
+                  className="absolute top-3 right-10 p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     void removeSubject(subject.id);
                   }}
                   className="absolute top-3 right-3 p-1.5 rounded-lg text-white/30 hover:text-red-300 hover:bg-red-500/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
@@ -412,7 +498,7 @@ export function MyCoursesClient({ userId }: { userId: string }) {
         )}
 
         {showSubjectForm && (
-          <FormModal title="Add subject" onClose={() => setShowSubjectForm(false)}>
+          <FormModal title={editSubjectId ? "Edit subject" : "Add subject"} onClose={() => { setShowSubjectForm(false); setEditSubjectId(null); setSubjectDraft({}); }}>
             <div className="space-y-3">
               <div>
                 <Label>Subject name *</Label>
@@ -449,7 +535,7 @@ export function MyCoursesClient({ userId }: { userId: string }) {
             </div>
             <div className="flex gap-2 mt-4">
               <Button onClick={addSubject} disabled={!subjectDraft.name?.trim()} className="flex-1">
-                <Plus className="w-4 h-4" /> Add & generate
+                <Plus className="w-4 h-4" /> {editSubjectId ? "Save subject" : "Add & generate"}
               </Button>
               <Button variant="secondary" onClick={() => setShowSubjectForm(false)}>
                 Cancel
@@ -475,6 +561,24 @@ export function MyCoursesClient({ userId }: { userId: string }) {
         }
       />
 
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <StatCard label="Courses" value={stats.courses} icon={GraduationCap} accent="emerald" />
+        <StatCard label="Subjects" value={stats.subjects} icon={BookOpen} accent="purple" />
+        <StatCard label="Materials ready" value={stats.ready} icon={Sparkles} accent="pink" />
+      </div>
+
+      {courses.length > 0 && (
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search courses..."
+            className="pl-9"
+          />
+        </div>
+      )}
+
       {courses.length === 0 ? (
         <Card>
           <EmptyState
@@ -490,7 +594,7 @@ export function MyCoursesClient({ userId }: { userId: string }) {
         </Card>
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
-          {courses.map((course) => {
+          {filteredCourses.map((course) => {
             const count = subjects.filter((s) => s.course_id === course.id).length;
             return (
               <Card
@@ -499,6 +603,18 @@ export function MyCoursesClient({ userId }: { userId: string }) {
                 className="cursor-pointer group relative"
                 onClick={() => setActiveCourseId(course.id)}
               >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditCourseId(course.id);
+                    setCourseDraft(course);
+                    setShowCourseForm(true);
+                  }}
+                  className="absolute top-3 right-10 p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
                 <button
                   type="button"
                   onClick={(e) => {
@@ -532,7 +648,10 @@ export function MyCoursesClient({ userId }: { userId: string }) {
       )}
 
       {showCourseForm && (
-        <FormModal title="Add course" onClose={() => setShowCourseForm(false)}>
+        <FormModal
+          title={editCourseId ? "Edit course" : "Add course"}
+          onClose={() => { setShowCourseForm(false); setEditCourseId(null); setCourseDraft({}); }}
+        >
           <div className="space-y-3">
             <div>
               <Label>Course name *</Label>
@@ -583,9 +702,9 @@ export function MyCoursesClient({ userId }: { userId: string }) {
           </div>
           <div className="flex gap-2 mt-4">
             <Button onClick={addCourse} disabled={!courseDraft.name?.trim()} className="flex-1">
-              <Plus className="w-4 h-4" /> Add course
+              <Plus className="w-4 h-4" /> {editCourseId ? "Save course" : "Add course"}
             </Button>
-            <Button variant="secondary" onClick={() => setShowCourseForm(false)}>
+            <Button variant="secondary" onClick={() => { setShowCourseForm(false); setEditCourseId(null); setCourseDraft({}); }}>
               Cancel
             </Button>
           </div>

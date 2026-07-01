@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import { requireAuthUser } from "@/lib/supabase/auth-server";
 import { createClient } from "@/lib/supabase/server";
 import { StudyCirclesClient } from "@/components/study-circles/StudyCirclesClient";
+import { PageSkeleton } from "@/components/ui/Skeleton";
 import type { StudyCircle } from "@/types";
+
+export const metadata: Metadata = {
+  title: "Study Circles",
+  description: "Collaborative group chats for study sessions with classmates.",
+};
 
 export default async function StudyCirclesPage() {
   const user = await requireAuthUser();
@@ -33,5 +42,9 @@ export default async function StudyCirclesPage() {
     if (!merged.some((m) => m.id === c.id)) merged.push(c as StudyCircle);
   }
 
-  return <StudyCirclesClient initialCircles={merged} userId={user.id} />;
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <StudyCirclesClient initialCircles={merged} userId={user.id} />
+    </Suspense>
+  );
 }
