@@ -291,7 +291,7 @@ export function MindMapTool() {
     setActiveId(null);
     try {
       const input = [t && `Topic: ${t}`, n].filter(Boolean).join("\n\n");
-      const res = await askRegalAI({
+      const { text: res } = await askRegalAI({
         action: "mindmap",
         text: input,
         topic: t || undefined,

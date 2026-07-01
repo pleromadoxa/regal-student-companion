@@ -249,7 +249,7 @@ export function useRegalLiveVoice({ subject, studentName, onTranscript }: UseReg
         setAiTranscript("");
 
         try {
-          const raw = await askRegalAI({
+          const { text: raw } = await askRegalAI({
             action: "tutor",
             question,
             text: buildFallbackTutorContext(

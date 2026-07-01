@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { regalAiBodySchema } from "@/lib/api-validation";
 import { runRegalAI, type AiRunResult } from "@/lib/regal-ai-router";
+import {
+  HUMANIZE_PROMPT,
+  HUMANIZE_SYSTEM,
+  RESEARCH_BRIEFING_PROMPT,
+  RESEARCH_CHAT_PROMPT,
+  RESEARCH_FAQ_PROMPT,
+  RESEARCH_SUMMARY_PROMPT,
+  RESEARCH_TIMELINE_PROMPT,
+  regalSystemInstruction,
+} from "@/lib/regal-ai-system";
+import { estimateAiDetectionScore, sanitizeAIContent } from "@/lib/format-ai-content";
 import { clientIp, rateLimitMemory } from "@/lib/security";
 import {
   checkAiUsage,
@@ -70,8 +81,9 @@ export async function POST(request: NextRequest) {
   }
 
   let result: string;
+  let aiDetectionScore: number | undefined;
   const aiState: { run: AiRunResult | null } = { run: null };
-  const sys = "Respond clearly for students. Use markdown when helpful.";
+  const sys = regalSystemInstruction("You assist Regal Student Companion students with academic work.");
   const ask = async (prompt: string, systemInstruction?: string, img = image) => {
     aiState.run = await runRegalAI(action, prompt, systemInstruction, img);
     return aiState.run.text;
@@ -180,20 +192,51 @@ Rules:
       case "transcribe":
         result = await ask(`Clean and structure this lecture transcript:\n\n${text}`, "Study notes assistant.");
         break;
-      case "humanize":
-        result = await ask(`Humanize this academic text naturally:\n\n${text}`, "Writing editor.");
+      case "humanize": {
+        let humanized = await ask(HUMANIZE_PROMPT(text ?? ""), HUMANIZE_SYSTEM);
+        let score = estimateAiDetectionScore(humanized);
+        let pass = 0;
+        while (score > 5 && pass < 3) {
+          humanized = await ask(
+            `Rewrite again for a more natural human voice. Current AI-detection estimate is ${score}% — target under 5%. Vary rhythm, use specific word choices, and remove any stiff or generic phrasing.\n\n${humanized}`,
+            HUMANIZE_SYSTEM
+          );
+          score = estimateAiDetectionScore(humanized);
+          pass += 1;
+        }
+        result = humanized;
+        aiDetectionScore = score;
         break;
+      }
       case "research_summary":
-        result = await ask(`Summarize sources:\n\n${sources}`, "Research synthesizer like Notebook LM.");
+        result = await ask(
+          RESEARCH_SUMMARY_PROMPT(sources ?? ""),
+          regalSystemInstruction("Research synthesizer for academic sources.")
+        );
         break;
       case "research_faq":
-        result = await ask(`Create 10 FAQ with answers from:\n\n${sources}`, "Research assistant.");
+        result = await ask(
+          RESEARCH_FAQ_PROMPT(sources ?? ""),
+          regalSystemInstruction("Research assistant.")
+        );
         break;
       case "research_chat":
-        result = await ask(`Sources:\n${sources}\n\nQuestion: ${question}`, "Answer from sources only.");
+        result = await ask(
+          RESEARCH_CHAT_PROMPT(sources ?? "", question ?? ""),
+          regalSystemInstruction("Answer from sources only.")
+        );
         break;
       case "research_briefing":
-        result = await ask(`Executive briefing from:\n\n${sources}`, "Research analyst.");
+        result = await ask(
+          RESEARCH_BRIEFING_PROMPT(sources ?? ""),
+          regalSystemInstruction("Research analyst.")
+        );
+        break;
+      case "research_timeline":
+        result = await ask(
+          RESEARCH_TIMELINE_PROMPT(sources ?? ""),
+          regalSystemInstruction("Research chronology specialist.")
+        );
         break;
       case "plagiarism":
         result = await ask(
@@ -415,12 +458,18 @@ Rules:
       );
     }
 
+    result = sanitizeAIContent(result);
+
     await Promise.all([
       incrementAiUsage(supabase, user.id),
       supabase.rpc("companion_increment_engagement", { delta: 5 }),
     ]);
 
-    return NextResponse.json({ result, aiRemaining: usage.remaining - 1 });
+    return NextResponse.json({
+      result,
+      aiRemaining: usage.remaining - 1,
+      ...(aiDetectionScore !== undefined ? { aiDetectionScore } : {}),
+    });
   } catch (err) {
     console.error("[regal-ai]", err);
     return NextResponse.json(

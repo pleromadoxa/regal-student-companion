@@ -106,7 +106,7 @@ export function RegalMentorClient({
           .slice(-8)
           .map((m) => `${m.role === "user" ? "Student" : "Mentor"}: ${m.text}`)
           .join("\n\n");
-        const raw = await askRegalAI({
+        const { text: raw } = await askRegalAI({
           action: "mentor_chat",
           question: text.trim(),
           text: `${contextBlock}\n\nConversation:\n${history}`,

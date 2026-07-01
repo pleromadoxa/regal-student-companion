@@ -187,7 +187,7 @@ export function QuickNotesTool() {
     setAiAction(action);
     setAiResult("");
     try {
-      setAiResult(await askRegalAI({ action, text: content }));
+      setAiResult((await askRegalAI({ action, text: content })).text);
     } catch (e) {
       setAiResult(e instanceof Error ? e.message : "Regal AI error");
     } finally {

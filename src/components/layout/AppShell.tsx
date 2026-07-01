@@ -155,6 +155,9 @@ export function AppShell({
       </nav>
 
       <div className="mt-auto pt-4 border-t border-white/10">
+        <p className="px-2 mb-3 text-[10px] text-muted leading-relaxed">
+          © {new Date().getFullYear()} Quantum Regal. All Rights Reserved.
+        </p>
         <Link
           href="/profile"
           onClick={() => setMobileOpen(false)}

@@ -1,12 +1,19 @@
 import { ApiError, fetchJson } from "@/lib/api-fetch";
+import { sanitizeAIContent } from "@/lib/format-ai-content";
 
 export const REGAL_AI_NAME = "Regal AI" as const;
 export const REGAL_AI_TAGLINE = "Powered by Regal AI" as const;
+
+export type RegalAIResult = {
+  text: string;
+  aiDetectionScore?: number;
+};
 
 type RegalAiResponse = {
   error?: string;
   result?: string;
   upgradeRequired?: boolean;
+  aiDetectionScore?: number;
 };
 
 export async function askRegalAI(body: {
@@ -23,7 +30,7 @@ export async function askRegalAI(body: {
   count?: number;
   imageBase64?: string;
   imageMimeType?: string;
-}): Promise<string> {
+}): Promise<RegalAIResult> {
   const { data, res } = await fetchJson<RegalAiResponse>("/api/regal-ai", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -42,7 +49,10 @@ export async function askRegalAI(body: {
     throw new ApiError("Regal AI returned an empty response", res.status);
   }
 
-  return data.result;
+  return {
+    text: sanitizeAIContent(data.result),
+    aiDetectionScore: data.aiDetectionScore,
+  };
 }
 
 export const REGAL_AI_ACTIONS = {
@@ -57,6 +67,7 @@ export const REGAL_AI_ACTIONS = {
   research_faq: "research_faq",
   research_chat: "research_chat",
   research_briefing: "research_briefing",
+  research_timeline: "research_timeline",
   plagiarism: "plagiarism",
   math: "math",
   language: "language",

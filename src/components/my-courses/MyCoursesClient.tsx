@@ -58,7 +58,7 @@ async function generateCourseMaterial(opts: {
     .filter(Boolean)
     .join("\n");
 
-  const raw = await askRegalAI({
+  const { text: raw } = await askRegalAI({
     action: "course_material",
     text: context,
     subject: opts.subjectName,

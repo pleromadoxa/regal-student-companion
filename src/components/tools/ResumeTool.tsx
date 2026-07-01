@@ -255,7 +255,7 @@ export function ResumeTool() {
     if (!text) return;
     setLoading(mode === "cover_letter" ? "cover" : "resume");
     try {
-      const res = await askRegalAI({ action: "resume", text, mode });
+      const { text: res } = await askRegalAI({ action: "resume", text, mode });
       if (mode === "cover_letter") {
         setCoverLetter(res);
         setPreviewTab("cover");

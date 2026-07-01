@@ -1,4 +1,5 @@
 import { REGAL_AI_NAME } from "@/lib/regal-ai";
+import { REGAL_AI_IDENTITY, REGAL_AI_FORMAT_RULES } from "@/lib/regal-ai-system";
 import { cloudflareAiChat, cloudflareAiVision } from "@/lib/cloudflare-ai";
 
 /** Actions that work well on Workers AI — try CF first for cost + latency. */
@@ -13,6 +14,11 @@ export const CF_FIRST_ACTIONS = new Set([
   "language",
   "expand",
   "study_plan",
+  "research_summary",
+  "research_faq",
+  "research_chat",
+  "research_briefing",
+  "research_timeline",
 ]);
 
 /** Lightweight actions — CF only unless empty response. */
@@ -28,6 +34,11 @@ function decodeBase64Image(base64: string): Uint8Array | null {
   } catch {
     return null;
   }
+}
+
+function regalBaseSystem(extra?: string): string {
+  const base = `${REGAL_AI_IDENTITY}\n${REGAL_AI_FORMAT_RULES}`;
+  return extra ? `${extra}\n\n${base}` : base;
 }
 
 async function callGemini(
@@ -55,8 +66,8 @@ async function callGemini(
             parts: [
               {
                 text: systemInstruction
-                  ? `${systemInstruction} You are ${REGAL_AI_NAME}, the academic intelligence built into Regal Student Companion.`
-                  : `You are ${REGAL_AI_NAME}, the academic intelligence built into Regal Student Companion.`,
+                  ? `${systemInstruction}\n\n${regalBaseSystem()}`
+                  : regalBaseSystem(`You are ${REGAL_AI_NAME}.`),
               },
             ],
           },
@@ -101,8 +112,8 @@ async function callCloudflare(
     }
 
     const sys = systemInstruction
-      ? `${systemInstruction} You are ${REGAL_AI_NAME}, the academic intelligence built into Regal Student Companion.`
-      : `You are ${REGAL_AI_NAME}, the academic intelligence built into Regal Student Companion. Respond clearly for students. Use markdown when helpful.`;
+      ? `${systemInstruction}\n\n${regalBaseSystem()}`
+      : regalBaseSystem(`You are ${REGAL_AI_NAME}. Respond clearly for students.`);
 
     return cloudflareAiChat(
       [

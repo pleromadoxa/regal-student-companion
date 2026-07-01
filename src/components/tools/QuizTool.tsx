@@ -161,7 +161,7 @@ export function QuizTool() {
       setLoading(true);
       setError("");
       try {
-        const raw = await askRegalAI({
+        const { text: raw } = await askRegalAI({
           action: "quiz",
           text,
           count,

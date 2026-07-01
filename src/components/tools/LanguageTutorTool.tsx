@@ -197,7 +197,7 @@ export function LanguageTutorTool() {
 
       try {
         const context = mode === "conversation" ? buildContext(withUser) : "";
-        const res = await askRegalAI({
+        const { text: res } = await askRegalAI({
           action: "language",
           language,
           mode,

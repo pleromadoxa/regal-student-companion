@@ -20,6 +20,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Ca
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { askRegalAI } from "@/lib/regal-ai";
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { cn } from "@/lib/utils";
 import type { ResearchProject, ResearchSource, ResearchNote } from "@/types";
@@ -29,7 +30,7 @@ type NoteType = ResearchNote["note_type"];
 const NOTE_TYPES: { id: NoteType; label: string; icon: typeof Sparkles; action: string }[] = [
   { id: "summary", label: "Regal AI Summary", icon: FileText, action: "research_summary" },
   { id: "faq", label: "Regal AI FAQ", icon: List, action: "research_faq" },
-  { id: "timeline", label: "Regal AI Timeline", icon: Clock, action: "research_summary" },
+  { id: "timeline", label: "Regal AI Timeline", icon: Clock, action: "research_timeline" },
   { id: "briefing", label: "Regal AI Briefing", icon: FileBarChart, action: "research_briefing" },
   { id: "chat", label: "Regal AI Chat", icon: MessageSquare, action: "research_chat" },
 ];
@@ -58,6 +59,7 @@ export function ResearchLabClient({
   const [sourceType, setSourceType] = useState<"note" | "url" | "document">("note");
   const [chatQuestion, setChatQuestion] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeNoteType, setActiveNoteType] = useState<NoteType>("summary");
 
   const supabase = createClient();
@@ -107,8 +109,17 @@ export function ResearchLabClient({
   const addSource = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeProject) return;
+    if (sourceType === "url" && !sourceUrl.trim()) {
+      setError("Enter a URL for this source.");
+      return;
+    }
+    if (sourceType !== "url" && !sourceContent.trim()) {
+      setError("Add content or notes for this source.");
+      return;
+    }
 
-    const { data } = await supabase
+    setError(null);
+    const { data, error: insertError } = await supabase
       .from("companion_research_sources")
       .insert({
         project_id: activeProject.id,
@@ -120,6 +131,11 @@ export function ResearchLabClient({
       })
       .select()
       .single();
+
+    if (insertError) {
+      setError(insertError.message);
+      return;
+    }
 
     if (data) {
       setSources((prev) => [data as ResearchSource, ...prev]);
@@ -138,19 +154,27 @@ export function ResearchLabClient({
     if (!activeProject || sources.length === 0) return;
     setLoading(true);
     setActiveNoteType(noteType);
+    setError(null);
 
     const sourcesText = sources
-      .map(
-        (s) =>
-          `[${s.title}] (${s.source_type})\n${s.content ?? s.url ?? ""}`
-      )
+      .map((s) => {
+        const body =
+          s.source_type === "url"
+            ? `URL: ${s.url ?? ""}`
+            : (s.content ?? "").trim() || `[${s.title}]`;
+        return `[${s.title}] (${s.source_type})\n${body}`;
+      })
       .join("\n\n---\n\n");
 
     const action =
       NOTE_TYPES.find((n) => n.id === noteType)?.action ?? "research_summary";
 
     try {
-      const data = { result: await askRegalAI({ action, sources: sourcesText, question: chatQuestion || undefined }) };
+      const { text } = await askRegalAI({
+        action,
+        sources: sourcesText,
+        question: chatQuestion || undefined,
+      });
 
       const title =
         noteType === "chat"
@@ -163,7 +187,7 @@ export function ResearchLabClient({
           project_id: activeProject.id,
           user_id: userId,
           title,
-          content: data.result,
+          content: text,
           note_type: noteType,
         })
         .select()
@@ -172,7 +196,7 @@ export function ResearchLabClient({
       if (note) setNotes((prev) => [note as ResearchNote, ...prev]);
       setChatQuestion("");
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : "Regal AI generation failed");
     } finally {
       setLoading(false);
     }
@@ -292,13 +316,19 @@ export function ResearchLabClient({
                 </div>
                 {sourceType === "url" ? (
                   <Input
+                    required
                     placeholder="https://..."
                     value={sourceUrl}
                     onChange={(e) => setSourceUrl(e.target.value)}
                   />
                 ) : (
                   <Textarea
-                    placeholder="Paste content or notes..."
+                    required
+                    placeholder={
+                      sourceType === "document"
+                        ? "Paste document text (PDF text export, article, etc.)..."
+                        : "Paste content or notes..."
+                    }
                     value={sourceContent}
                     onChange={(e) => setSourceContent(e.target.value)}
                     className="min-h-[80px]"
@@ -381,6 +411,11 @@ export function ResearchLabClient({
                     Add at least one source to generate insights
                   </p>
                 )}
+                {error && (
+                  <p className="text-xs text-red-300 mt-3 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                    {error}
+                  </p>
+                )}
               </Card>
 
               <Card className="overflow-y-auto max-h-[500px]">
@@ -405,9 +440,7 @@ export function ResearchLabClient({
                             {note.note_type}
                           </span>
                         </div>
-                        <pre className="whitespace-pre-wrap text-sm text-white/85 font-sans">
-                          {note.content}
-                        </pre>
+                        <MarkdownContent content={note.content ?? ""} />
                       </li>
                     ))}
                   </ul>

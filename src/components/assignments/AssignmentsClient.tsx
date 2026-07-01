@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Ca
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select, Textarea } from "@/components/ui/Input";
 import { askRegalAI, REGAL_AI_NAME } from "@/lib/regal-ai";
+import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ export function AssignmentsClient({
   const [essayTopic, setEssayTopic] = useState("");
   const [citationStyle, setCitationStyle] = useState("APA");
   const [result, setResult] = useState("");
+  const [aiScore, setAiScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -68,6 +70,7 @@ export function AssignmentsClient({
   const runRegalAI = async () => {
     setLoading(true);
     setResult("");
+    setAiScore(null);
     try {
       const body: Record<string, string> = { action: activeTab };
       if (activeTab === "essay") {
@@ -79,7 +82,13 @@ export function AssignmentsClient({
       } else {
         body.text = inputText;
       }
-      setResult(await askRegalAI(body as unknown as Parameters<typeof askRegalAI>[0]));
+      const { text, aiDetectionScore } = await askRegalAI(
+        body as unknown as Parameters<typeof askRegalAI>[0]
+      );
+      setResult(text);
+      if (activeTab === "humanize" && aiDetectionScore !== undefined) {
+        setAiScore(aiDetectionScore);
+      }
     } catch (err) {
       setResult(err instanceof Error ? err.message : `${REGAL_AI_NAME} request failed`);
     } finally {
@@ -361,12 +370,18 @@ export function AssignmentsClient({
                   <FileText className="w-4 h-4" /> {REGAL_AI_NAME} Result
                 </CardTitle>
                 <RegalAIBadge />
+                {activeTab === "humanize" && aiScore !== null && (
+                  <p
+                    className={`text-xs mt-2 font-medium ${
+                      aiScore <= 5 ? "text-emerald-300" : "text-amber-300"
+                    }`}
+                  >
+                    Estimated AI detection score: {aiScore}%{" "}
+                    {aiScore <= 5 ? "(human-like)" : "(Regal AI polished further if needed)"}
+                  </p>
+                )}
               </CardHeader>
-              <div className="prose prose-invert prose-sm max-w-none">
-                <pre className="whitespace-pre-wrap text-sm text-white/90 font-sans">
-                  {result}
-                </pre>
-              </div>
+              <MarkdownContent content={result} />
             </Card>
           )}
         </div>

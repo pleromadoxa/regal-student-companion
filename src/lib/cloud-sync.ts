@@ -10,6 +10,8 @@ export const CLOUD_SYNC_KEY_SUFFIXES = [
   "regal-subject-materials",
   "regal-mentor",
   "regal-war-plans",
+  "regal-war-plan-content",
+  "regal-research-drafts",
   "regal-math-history",
   "regal-quiz-history",
   "regal-bibliography",

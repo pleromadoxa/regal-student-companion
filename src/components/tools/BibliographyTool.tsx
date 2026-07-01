@@ -149,7 +149,7 @@ export function BibliographyTool() {
     setLoading(true);
     setResult("");
     try {
-      const citation = await askRegalAI({ action: "cite", text, style });
+      const { text: citation } = await askRegalAI({ action: "cite", text, style });
       setResult(citation);
     } catch (e) {
       setResult(e instanceof Error ? e.message : "Regal AI error");

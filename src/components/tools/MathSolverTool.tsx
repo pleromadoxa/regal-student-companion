@@ -293,7 +293,7 @@ export function MathSolverTool() {
       setLoading(true);
       if (!mode) setResult("");
       try {
-        const res = await askRegalAI({
+        const { text: res } = await askRegalAI({
           action: "math",
           text: problem.trim() || undefined,
           subject,

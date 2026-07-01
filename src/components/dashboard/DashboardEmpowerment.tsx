@@ -55,7 +55,7 @@ export function DashboardEmpowerment({
   const fetchBoost = async () => {
     setBoostLoading(true);
     try {
-      const raw = await askRegalAI({
+      const { text: raw } = await askRegalAI({
         action: "student_boost",
         text: boostContext,
       });

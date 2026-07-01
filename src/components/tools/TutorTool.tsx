@@ -184,7 +184,7 @@ export function TutorTool() {
       setLoading(true);
 
       try {
-        const res = await askRegalAI({
+        const { text: res } = await askRegalAI({
           action: "tutor",
           question: q,
           text: `Subject: ${subject}\n\n${q}`,

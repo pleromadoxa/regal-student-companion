@@ -99,7 +99,7 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
     setLoading(true);
     setError(null);
     try {
-      const raw = await askRegalAI({
+      const { text: raw } = await askRegalAI({
         action: "exam_war_plan",
         topic: title.trim(),
         subject: subject.trim() || "General",

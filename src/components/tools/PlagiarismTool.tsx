@@ -255,7 +255,7 @@ export function PlagiarismTool() {
     }, 450);
 
     try {
-      const raw = await askRegalAI({ action: "plagiarism", text: trimmed });
+      const { text: raw } = await askRegalAI({ action: "plagiarism", text: trimmed });
       const parsed = parsePlagiarismReport(raw);
       setProgress(100);
       setReport(parsed);

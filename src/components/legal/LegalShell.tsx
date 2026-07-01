@@ -3,6 +3,7 @@ import Image from "next/image";
 import { LEGAL_SLUGS } from "@/lib/legal/types";
 import { getLegalDocument } from "@/lib/legal/documents";
 import { REGAL_MAIL_URL } from "@/lib/branding";
+import { COPYRIGHT_LINE, COMPANY_NAME } from "@/lib/company";
 
 const NAV_LABELS: Record<string, string> = {
   terms: "Terms of Service",
@@ -68,6 +69,10 @@ export function LegalShell({
         </aside>
         <div className="flex-1 min-w-0">{children}</div>
       </div>
+      <footer className="border-t border-white/10 py-6 px-4 sm:px-6 text-center text-xs text-muted">
+        <p>{COPYRIGHT_LINE}</p>
+        <p className="mt-1">{COMPANY_NAME} · Regal Student Companion</p>
+      </footer>
     </div>
   );
 }

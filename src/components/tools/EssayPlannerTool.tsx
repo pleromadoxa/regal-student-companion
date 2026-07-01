@@ -110,7 +110,7 @@ export function EssayPlannerTool() {
     setPlanLoading(true);
     setError(null);
     try {
-      const raw = await askRegalAI({
+      const { text: raw } = await askRegalAI({
         action: "essay_plan",
         topic: draft.topic.trim(),
         text: draft.notes.trim() || undefined,
@@ -131,7 +131,7 @@ export function EssayPlannerTool() {
     setEssayLoading(true);
     setError(null);
     try {
-      const raw = await askRegalAI({
+      const { text: raw } = await askRegalAI({
         action: "essay_generate",
         topic: draft.topic.trim(),
         text: draft.plan,

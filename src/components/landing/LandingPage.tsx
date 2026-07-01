@@ -22,6 +22,7 @@ import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
 import { PricingCards } from "@/components/pricing/PricingCards";
 import { DashboardPreview } from "@/components/landing/DashboardPreview";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
+import { AppFooter } from "@/components/layout/AppFooter";
 import { SITE } from "@/lib/site";
 import {
   REGAL_AI,
@@ -229,52 +230,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-4 border-t border-white/10">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-xs text-muted mb-8">
-            <div>
-              <p className="font-semibold text-white mb-3">Product</p>
-              <ul className="space-y-2">
-                <li><a href="#features" className="hover:text-white">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white">Pricing</a></li>
-                <li><Link href="/login" className="hover:text-white">Sign in</Link></li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-white mb-3">Regal ecosystem</p>
-              <ul className="space-y-2">
-                <li>
-                  <a href={REGAL_MAIL_URL} className="hover:text-white" target="_blank" rel="noopener noreferrer">
-                    {REGAL_MAIL_LABEL}
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-white mb-3">Legal</p>
-              <ul className="space-y-2">
-                <li><Link href="/legal/terms" className="hover:text-white">Terms of Service</Link></li>
-                <li><Link href="/legal/privacy" className="hover:text-white">Privacy Policy</Link></li>
-                <li><Link href="/legal/cookies" className="hover:text-white">Cookie Policy</Link></li>
-                <li><Link href="/legal/acceptable-use" className="hover:text-white">Acceptable Use</Link></li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-white mb-3">&nbsp;</p>
-              <ul className="space-y-2">
-                <li><Link href="/legal/disclaimer" className="hover:text-white">Disclaimer</Link></li>
-                <li><Link href="/legal/refunds" className="hover:text-white">Refunds & Billing</Link></li>
-                <li><Link href="/legal/dmca" className="hover:text-white">Copyright / DMCA</Link></li>
-                <li><Link href="/legal" className="hover:text-white">All legal documents</Link></li>
-              </ul>
-            </div>
-          </div>
-          <p className="text-center text-xs text-muted">
-            © {new Date().getFullYear()} Regal Student Companion · Part of the Regal ecosystem
-          </p>
-        </div>
-      </footer>
+      <AppFooter />
     </div>
   );
 }

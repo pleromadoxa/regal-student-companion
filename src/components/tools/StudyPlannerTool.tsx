@@ -341,7 +341,7 @@ export function StudyPlannerTool() {
 
       try {
         const prompt = buildPrompt(form, followUp, followUp ? result : undefined);
-        const res = await askRegalAI({ action: "study_plan", text: prompt });
+        const { text: res } = await askRegalAI({ action: "study_plan", text: prompt });
         setResult(res);
 
         if (!followUp) {

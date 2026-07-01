@@ -31,7 +31,7 @@ export function RegalAIPanel({
     setLoading(true);
     setResult("");
     try {
-      const res = await askRegalAI({ action, text, topic, ...extra });
+      const { text: res } = await askRegalAI({ action, text, topic, ...extra });
       setResult(res);
     } catch (e) {
       setResult(e instanceof Error ? e.message : "Regal AI error");
@@ -81,7 +81,7 @@ export function RegalAIChatPanel({ action = "tutor" }: { action?: string }) {
     setMessages((m) => [...m, { role: "user", text: q }]);
     setLoading(true);
     try {
-      const res = await askRegalAI({ action, question: q, text: q });
+      const { text: res } = await askRegalAI({ action, question: q, text: q });
       setMessages((m) => [...m, { role: "ai", text: res }]);
     } catch (e) {
       setMessages((m) => [...m, { role: "ai", text: e instanceof Error ? e.message : "Error" }]);
