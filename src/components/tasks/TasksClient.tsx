@@ -210,7 +210,7 @@ export function TasksClient({ initialTasks }: { initialTasks: Task[] }) {
                     </div>
                     <button
                       onClick={() => deleteTask(task.id)}
-                      className="opacity-0 group-hover:opacity-100 text-muted hover:text-red-300 transition-opacity"
+                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted hover:text-red-300 transition-opacity"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

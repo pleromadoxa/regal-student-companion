@@ -9,6 +9,7 @@ import {
   Calendar,
   Cloud,
   GraduationCap,
+  Mail,
   Mic,
   Shield,
   Sparkles,
@@ -20,23 +21,32 @@ import { Button } from "@/components/ui/Button";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
 import { PricingCards } from "@/components/pricing/PricingCards";
 import { DashboardPreview } from "@/components/landing/DashboardPreview";
+import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { SITE } from "@/lib/site";
+import {
+  REGAL_AI,
+  REGAL_CLOUD,
+  REGAL_CLOUD_SHORT,
+  REGAL_MAIL_LABEL,
+  REGAL_MAIL_URL,
+  USER_FACING,
+} from "@/lib/branding";
 
 const FEATURES = [
   {
     icon: Brain,
     title: "Regal AI everywhere",
-    desc: "Gemini + Cloudflare Workers AI power 21+ tools — essays, math, research, mentor chat, and live voice tutoring.",
+    desc: `${USER_FACING.aiEverywhere} — essays, math, research, mentor chat, and live voice tutoring.`,
   },
   {
     icon: Swords,
     title: "Exam War Room",
-    desc: "AI-generated day-by-day battle plans, weak-spot drills, and last-24-hour playbooks before finals.",
+    desc: "Regal AI-generated day-by-day battle plans, weak-spot drills, and last-24-hour playbooks before finals.",
   },
   {
     icon: BookOpen,
     title: "Research Lab",
-    desc: "Notebook LM-style source uploads, summaries, FAQ generation, and chat-with-your-materials.",
+    desc: "Upload sources, generate summaries and FAQs, and chat with your materials — all in one workspace.",
   },
   {
     icon: GraduationCap,
@@ -45,8 +55,8 @@ const FEATURES = [
   },
   {
     icon: Cloud,
-    title: "Cloud sync (R2)",
-    desc: "Back up tool drafts, mentor chats, and exam plans to Cloudflare R2. Pull on any device.",
+    title: REGAL_CLOUD_SHORT,
+    desc: `Back up tool drafts, mentor chats, and exam plans to ${REGAL_CLOUD}. Pull on any device.`,
   },
   {
     icon: Users,
@@ -61,14 +71,8 @@ const FEATURES = [
   {
     icon: Mic,
     title: "Live voice tutor",
-    desc: "Talk through problems with Regal AI in real time — perfect for math, languages, and exam review.",
+    desc: `Talk through problems with ${REGAL_AI} in real time — perfect for math, languages, and exam review.`,
   },
-];
-
-const STEPS = [
-  { n: "01", title: "Sign in with Regal Mail", desc: "Use your existing @regalmail.me account — no new password to remember." },
-  { n: "02", title: "Pick your plan", desc: "Start free on Scholar, upgrade via Paystack when you need more AI and cloud sync." },
-  { n: "03", title: "Study smarter", desc: "Launch tools from the dashboard, sync progress to the cloud, and crush your semester." },
 ];
 
 export function LandingPage() {
@@ -76,9 +80,9 @@ export function LandingPage() {
     <div className="min-h-screen bg-[#08040f] text-white overflow-x-hidden">
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-white/10 backdrop-blur-xl bg-[#08040f]/80">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="" width={36} height={36} className="rounded-lg" />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+            <Image src="/logo.png" alt="" width={47} height={47} className="rounded-lg" />
             <span className="font-bold text-sm hidden sm:block">Regal Companion</span>
           </Link>
           <nav className="hidden md:flex items-center gap-8 text-sm text-muted">
@@ -87,6 +91,28 @@ export function LandingPage() {
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </nav>
           <div className="flex items-center gap-2">
+            <a
+              href={REGAL_MAIL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sm:hidden inline-flex"
+              aria-label={REGAL_MAIL_LABEL}
+            >
+              <Button variant="ghost" size="sm" className="px-2">
+                <Mail className="w-4 h-4" />
+              </Button>
+            </a>
+            <a
+              href={REGAL_MAIL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex"
+            >
+              <Button variant="ghost" size="sm" className="gap-1.5">
+                <Mail className="w-3.5 h-3.5" />
+                {REGAL_MAIL_LABEL}
+              </Button>
+            </a>
             <Link href="/login">
               <Button variant="ghost" size="sm">Sign in</Button>
             </Link>
@@ -105,15 +131,15 @@ export function LandingPage() {
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-regal-purple-400/30 bg-regal-purple-500/10 text-xs font-medium text-regal-purple-200 mb-6">
                 <Sparkles className="w-3.5 h-3.5 text-regal-pink" />
-                Built for Regal Mail students
+                Built for {REGAL_MAIL_LABEL} students
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
                 The academic workspace{" "}
-                <span className="regal-gradient-text">powered by Regal AI</span>
+                <span className="regal-gradient-text">powered by {REGAL_AI}</span>
               </h1>
               <p className="mt-6 text-lg text-muted max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                {SITE.description} Plan essays, prep for exams, sync your progress to the cloud,
-                and access 21+ student tools — all with one Regal Mail sign-in.
+                {SITE.description} Plan essays, prep for exams, sync your progress to {REGAL_CLOUD},
+                and access 21+ student tools — all with one {REGAL_MAIL_LABEL} sign-in.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                 <Link href="/login">
@@ -129,7 +155,7 @@ export function LandingPage() {
               </div>
               <div className="mt-6 flex flex-wrap justify-center lg:justify-start gap-4 text-xs text-muted">
                 <span className="flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> Isolated companion data</span>
-                <span className="flex items-center gap-1"><Zap className="w-3.5 h-3.5" /> Edge AI on Cloudflare</span>
+                <span className="flex items-center gap-1"><Zap className="w-3.5 h-3.5" /> {REGAL_AI} at the edge</span>
                 <RegalAIBadge />
               </div>
             </div>
@@ -167,21 +193,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how" className="py-20 px-4 sm:px-6 bg-white/[0.02]">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Up and running in minutes</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {STEPS.map((s) => (
-              <div key={s.n} className="relative p-6 rounded-2xl border border-white/10">
-                <span className="text-5xl font-black text-regal-purple-500/20">{s.n}</span>
-                <h3 className="text-lg font-bold text-white mt-2">{s.title}</h3>
-                <p className="text-sm text-muted mt-2 leading-relaxed">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HowItWorksSection />
 
       {/* Pricing */}
       <section id="pricing" className="py-24 px-4 sm:px-6">
@@ -189,14 +201,14 @@ export function LandingPage() {
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold">Simple, student-friendly pricing</h2>
             <p className="text-muted mt-4">
-              Start free on Scholar. Upgrade anytime with Paystack — secure card payments in USD.
-              Paid plans unlock cloud sync, Exam War Room, and higher AI limits.
+              Start free on Scholar. Upgrade anytime with {USER_FACING.securePayments}.
+              Paid plans unlock {REGAL_CLOUD_SHORT}, Exam War Room, and higher {REGAL_AI} limits.
             </p>
           </div>
           <PricingCards />
           <p className="text-center text-xs text-muted mt-8 max-w-lg mx-auto">
-            Payments processed securely by Paystack. Cancel anytime. Limits reset daily (AI) or
-            monthly (voice). Scholar plan requires a Regal Mail account.
+            Payments processed securely. Cancel anytime. Limits reset daily ({REGAL_AI}) or
+            monthly (voice). Scholar plan requires a {REGAL_MAIL_LABEL} account.
           </p>
         </div>
       </section>
@@ -206,7 +218,7 @@ export function LandingPage() {
         <div className="max-w-3xl mx-auto text-center glass-panel rounded-3xl p-10 sm:p-14 border-regal-purple-400/20">
           <h2 className="text-2xl sm:text-3xl font-bold">Ready to own your semester?</h2>
           <p className="text-muted mt-3 mb-8">
-            Join Regal Mail students using AI, cloud sync, and elite study tools on{" "}
+            Join {REGAL_MAIL_LABEL} students using {REGAL_AI}, {REGAL_CLOUD}, and elite study tools on{" "}
             <strong className="text-white">regalcompanion.cloud</strong>.
           </p>
           <Link href="/login">
@@ -218,17 +230,50 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-10 px-4 border-t border-white/10 text-center text-xs text-muted">
-        <p>© {new Date().getFullYear()} Regal Student Companion · Part of the Regal ecosystem</p>
-        <p className="mt-2">
-          <a href="https://regalmail.me" className="text-regal-pink hover:underline" target="_blank" rel="noopener noreferrer">
-            regalmail.me
-          </a>
-          {" · "}
-          <a href="#pricing" className="hover:text-white">Pricing</a>
-          {" · "}
-          <Link href="/login" className="hover:text-white">Sign in</Link>
-        </p>
+      <footer className="py-12 px-4 border-t border-white/10">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-xs text-muted mb-8">
+            <div>
+              <p className="font-semibold text-white mb-3">Product</p>
+              <ul className="space-y-2">
+                <li><a href="#features" className="hover:text-white">Features</a></li>
+                <li><a href="#pricing" className="hover:text-white">Pricing</a></li>
+                <li><Link href="/login" className="hover:text-white">Sign in</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-white mb-3">Regal ecosystem</p>
+              <ul className="space-y-2">
+                <li>
+                  <a href={REGAL_MAIL_URL} className="hover:text-white" target="_blank" rel="noopener noreferrer">
+                    {REGAL_MAIL_LABEL}
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-white mb-3">Legal</p>
+              <ul className="space-y-2">
+                <li><Link href="/legal/terms" className="hover:text-white">Terms of Service</Link></li>
+                <li><Link href="/legal/privacy" className="hover:text-white">Privacy Policy</Link></li>
+                <li><Link href="/legal/cookies" className="hover:text-white">Cookie Policy</Link></li>
+                <li><Link href="/legal/acceptable-use" className="hover:text-white">Acceptable Use</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-white mb-3">&nbsp;</p>
+              <ul className="space-y-2">
+                <li><Link href="/legal/disclaimer" className="hover:text-white">Disclaimer</Link></li>
+                <li><Link href="/legal/refunds" className="hover:text-white">Refunds & Billing</Link></li>
+                <li><Link href="/legal/dmca" className="hover:text-white">Copyright / DMCA</Link></li>
+                <li><Link href="/legal" className="hover:text-white">All legal documents</Link></li>
+              </ul>
+            </div>
+          </div>
+          <p className="text-center text-xs text-muted">
+            © {new Date().getFullYear()} Regal Student Companion · Part of the Regal ecosystem
+          </p>
+        </div>
       </footer>
     </div>
   );

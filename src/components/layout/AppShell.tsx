@@ -26,11 +26,13 @@ import {
   Crown,
   Swords,
   PenLine,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { NAV_SECTIONS } from "@/lib/student-tools";
 import { REGAL_AI_NAME } from "@/lib/regal-ai";
+import { REGAL_MAIL_LABEL, REGAL_MAIL_URL } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
@@ -85,8 +87,8 @@ export function AppShell({
         <Image
           src="/logo.png"
           alt="Regal Student Companion"
-          width={44}
-          height={44}
+          width={57}
+          height={57}
           className="rounded-xl shadow-lg shadow-regal-purple-500/20 group-hover:scale-105 transition-transform"
           priority
         />
@@ -103,6 +105,16 @@ export function AppShell({
         </div>
         <p className="text-[10px] text-muted mt-0.5 pl-5">Assignments · Research · Tools</p>
       </div>
+
+      <a
+        href={REGAL_MAIL_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mb-4 flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-medium text-muted hover:text-white hover:bg-white/5 border border-white/8 transition-colors"
+      >
+        <Mail className="w-4 h-4 shrink-0" />
+        {REGAL_MAIL_LABEL}
+      </a>
 
       <nav className="flex-1 space-y-5 overflow-y-auto pr-1">
         {NAV_SECTIONS.map((section) => (
@@ -194,7 +206,7 @@ export function AppShell({
       )}
 
       <div className="flex-1 lg:ml-[260px] min-w-0">
-        <header className="lg:hidden sticky top-0 z-40 flex items-center gap-3 px-4 py-3 border-b border-white/10 glass-panel backdrop-blur-xl">
+        <header className="lg:hidden sticky top-0 z-40 flex items-center gap-3 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] border-b border-white/10 glass-panel backdrop-blur-xl">
           {inTool ? (
             <Link href="/tools" className="text-muted hover:text-white" aria-label="Back to tools">
               <ChevronLeft className="w-5 h-5" />
@@ -209,12 +221,12 @@ export function AppShell({
               <Menu className="w-5 h-5" />
             </button>
           )}
-          <Image src="/logo.png" alt="" width={28} height={28} className="rounded-lg" aria-hidden />
+          <Image src="/logo.png" alt="" width={36} height={36} className="rounded-lg" aria-hidden />
           <div className="min-w-0 flex-1">
             <MobilePageTitle />
           </div>
         </header>
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</main>
       </div>
     </div>
   );

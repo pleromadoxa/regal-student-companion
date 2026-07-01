@@ -83,7 +83,7 @@ export function ToolHubCard({
                 <RegalAIBadge className={cn("shrink-0 origin-top-right", compact ? "scale-[0.72]" : "scale-90")} />
               ) : (
                 !compact && (
-                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <ArrowRight className="w-3.5 h-3.5 text-white/50" />
                   </div>
                 )

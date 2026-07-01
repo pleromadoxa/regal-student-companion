@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { initializeTransaction, isPaystackConfigured } from "@/lib/paystack";
+import { USER_FACING } from "@/lib/branding";
 import { SITE } from "@/lib/site";
 import { clientIp, rateLimitMemory } from "@/lib/security";
 
@@ -9,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     if (!isPaystackConfigured()) {
       return NextResponse.json(
-        { error: "Paystack is not configured yet. Add PAYSTACK_SECRET_KEY to environment." },
+        { error: USER_FACING.paymentUnavailable },
         { status: 503 }
       );
     }

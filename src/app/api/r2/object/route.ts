@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     const bucket = await getCompanionR2();
-    if (!bucket) return jsonResponse({ error: "R2 unavailable" }, 503);
+    if (!bucket) return jsonResponse({ error: "Regal Cloud storage unavailable" }, 503);
 
     const object = await bucket.get(key);
     if (!object) return jsonResponse({ error: "Not found" }, 404);

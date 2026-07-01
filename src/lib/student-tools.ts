@@ -162,7 +162,7 @@ export const STUDENT_TOOLS: StudentTool[] = [
   {
     slug: "tutor",
     name: "Regal AI Tutor",
-    description: "24/7 tutor with Gemini Live voice sessions",
+    description: "24/7 tutor with Regal AI live voice sessions",
     icon: "GraduationCap",
     category: "regal-ai",
     regalAI: true,

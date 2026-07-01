@@ -10,6 +10,8 @@ import {
   PcmAudioPlayer,
 } from "@/lib/regal-live-audio";
 import { LIVE_MODEL } from "@/lib/regal-live";
+import { buildFallbackTutorContext } from "@/lib/regal-live-voice";
+import { speakNaturally } from "@/lib/speech-voices";
 
 export type VoiceLiveStatus =
   | "idle"
@@ -39,10 +41,11 @@ function getSpeechRecognition(): SpeechRecognitionCtor | null {
 
 type UseRegalLiveVoiceOptions = {
   subject: string;
+  studentName?: string;
   onTranscript?: (entry: VoiceTranscript) => void;
 };
 
-export function useRegalLiveVoice({ subject, onTranscript }: UseRegalLiveVoiceOptions) {
+export function useRegalLiveVoice({ subject, studentName, onTranscript }: UseRegalLiveVoiceOptions) {
   const [status, setStatus] = useState<VoiceLiveStatus>("idle");
   const [mode, setMode] = useState<"live" | "fallback" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +62,11 @@ export function useRegalLiveVoice({ subject, onTranscript }: UseRegalLiveVoiceOp
   const inputBufferRef = useRef("");
   const outputBufferRef = useRef("");
   const subjectRef = useRef(subject);
+  const studentFirstNameRef = useRef(studentName?.split(/\s+/)[0] ?? "there");
   subjectRef.current = subject;
+  if (studentName) {
+    studentFirstNameRef.current = studentName.split(/\s+/)[0] ?? studentFirstNameRef.current;
+  }
 
   const pushTranscript = useCallback(
     (role: "user" | "ai", text: string) => {
@@ -245,7 +252,11 @@ export function useRegalLiveVoice({ subject, onTranscript }: UseRegalLiveVoiceOp
           const raw = await askRegalAI({
             action: "tutor",
             question,
-            text: `Subject: ${subjectRef.current}\n\n${question}`,
+            text: buildFallbackTutorContext(
+              subjectRef.current,
+              studentFirstNameRef.current,
+              question
+            ),
             topic: subjectRef.current,
           });
           const reply = sanitizeAIContent(raw);
@@ -255,21 +266,7 @@ export function useRegalLiveVoice({ subject, onTranscript }: UseRegalLiveVoiceOp
           setStatus("speaking");
 
           await new Promise<void>((resolve) => {
-            if (!window.speechSynthesis) {
-              resolve();
-              return;
-            }
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(reply);
-            utterance.rate = 1;
-            const voices = window.speechSynthesis.getVoices();
-            const preferred =
-              voices.find((v) => v.name.includes("Google") && v.lang.startsWith("en")) ??
-              voices.find((v) => v.lang.startsWith("en"));
-            if (preferred) utterance.voice = preferred;
-            utterance.onend = () => resolve();
-            utterance.onerror = () => resolve();
-            window.speechSynthesis.speak(utterance);
+            speakNaturally(reply, { rate: 0.94, pitch: 1.02, onEnd: resolve });
           });
         } catch (e) {
           setError(e instanceof Error ? e.message : "Tutor unavailable");
@@ -305,11 +302,20 @@ export function useRegalLiveVoice({ subject, onTranscript }: UseRegalLiveVoiceOp
       const res = await fetch("/api/regal-ai/live-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject }),
+        body: JSON.stringify({ subject, studentName: studentFirstNameRef.current }),
       });
-      const data = (await res.json()) as { error?: string; token?: string; model?: string };
+      const data = (await res.json()) as {
+        error?: string;
+        token?: string;
+        model?: string;
+        studentFirstName?: string;
+      };
 
       if (!res.ok) throw new Error(data.error ?? "Voice session failed");
+
+      if (data.studentFirstName) {
+        studentFirstNameRef.current = data.studentFirstName;
+      }
 
       const { GoogleGenAI } = await import("@google/genai");
       const ai = new GoogleGenAI({
@@ -339,6 +345,22 @@ export function useRegalLiveVoice({ subject, onTranscript }: UseRegalLiveVoiceOp
 
       sessionRef.current = session;
       await startMicForLive(session);
+
+      const name = studentFirstNameRef.current;
+      const subj = subjectRef.current;
+      session.sendClientContent({
+        turns: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `Hi! I'm ${name} and I'm ready for my ${subj} tutoring session.`,
+              },
+            ],
+          },
+        ],
+        turnComplete: true,
+      });
     } catch (liveError) {
       sessionRef.current?.close();
       sessionRef.current = null;
@@ -346,7 +368,7 @@ export function useRegalLiveVoice({ subject, onTranscript }: UseRegalLiveVoiceOp
       playerRef.current = null;
 
       const message =
-        liveError instanceof Error ? liveError.message : "Gemini Live unavailable";
+        liveError instanceof Error ? liveError.message : "Regal AI Live unavailable";
       setMode("fallback");
       setError(`${message} — using browser voice mode`);
       beginFallbackListeningRef.current();

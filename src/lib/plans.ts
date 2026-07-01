@@ -1,3 +1,5 @@
+import { USER_FACING, REGAL_CLOUD_SHORT } from "@/lib/branding";
+
 export type PlanId = "scholar" | "graduate" | "campus";
 
 export type PlanLimits = {
@@ -62,7 +64,7 @@ export const PLANS: Record<PlanId, PricingPlan> = {
     name: "Graduate",
     tagline: "Power tools for serious semesters",
     priceLabel: "$9",
-    priceSubtext: "per month · billed in USD via Paystack",
+    priceSubtext: `per month · ${USER_FACING.securePayments.toLowerCase()}`,
     amountCents: 900,
     currency: "USD",
     cta: "Upgrade to Graduate",
@@ -80,7 +82,7 @@ export const PLANS: Record<PlanId, PricingPlan> = {
     },
     features: [
       "200 Regal AI requests per day",
-      "Cloud sync (R2 backup)",
+      REGAL_CLOUD_SHORT,
       "Exam War Room battle plans",
       "Live voice tutor (30 sessions/mo)",
       "Continuous CV & course export",
@@ -92,7 +94,7 @@ export const PLANS: Record<PlanId, PricingPlan> = {
     name: "Campus",
     tagline: "Everything — for top performers",
     priceLabel: "$19",
-    priceSubtext: "per month · billed in USD via Paystack",
+    priceSubtext: `per month · ${USER_FACING.securePayments.toLowerCase()}`,
     amountCents: 1900,
     currency: "USD",
     cta: "Go Campus Elite",
@@ -109,7 +111,7 @@ export const PLANS: Record<PlanId, PricingPlan> = {
     },
     features: [
       "500 Regal AI requests per day",
-      "Priority Workers AI routing",
+      USER_FACING.priorityAi,
       "120 live voice sessions per month",
       "Full cloud sync & file storage",
       "Exam War Room + Regal Mentor",

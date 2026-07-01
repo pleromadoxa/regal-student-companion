@@ -266,7 +266,7 @@ export function QuickNotesTool() {
                   {formatDistanceToNow(new Date(n.updated_at), { addSuffix: true })}
                 </p>
               </button>
-              <div className="flex justify-end gap-0.5 px-2 pb-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex justify-end gap-0.5 px-2 pb-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 <Button
                   variant="ghost"
                   size="sm"

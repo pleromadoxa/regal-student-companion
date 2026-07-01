@@ -18,6 +18,7 @@ import {
 import { VoiceLivePanel } from "@/components/tools/VoiceLivePanel";
 import type { VoiceTranscript } from "@/hooks/useRegalLiveVoice";
 import { askRegalAI, REGAL_AI_NAME } from "@/lib/regal-ai";
+import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Input";
@@ -116,7 +117,7 @@ function MessageBubble({
           <button
             type="button"
             onClick={() => onCopy(message.id, message.text)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-white/10 text-muted hover:text-white"
+            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-white/10 text-muted hover:text-white"
             aria-label="Copy message"
           >
             {copiedId === message.id ? (
@@ -140,7 +141,21 @@ export function TutorTool() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [studentName, setStudentName] = useState<string | undefined>();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    void supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("companion_profiles")
+        .select("display_name, email")
+        .eq("id", user.id)
+        .maybeSingle();
+      setStudentName(data?.display_name ?? data?.email?.split("@")[0] ?? undefined);
+    });
+  }, []);
 
   const appendVoiceTranscript = useCallback((entry: VoiceTranscript) => {
     setMessages((m) => [
@@ -225,8 +240,8 @@ export function TutorTool() {
   };
 
   return (
-    <div className="grid lg:grid-cols-[260px_1fr] gap-6 items-stretch min-h-[calc(100vh-280px)]">
-      <aside className="lg:sticky lg:top-6 lg:self-start">
+    <div className="grid lg:grid-cols-[260px_1fr] gap-4 sm:gap-6 items-stretch">
+      <aside className="lg:sticky lg:top-6 lg:self-start order-2 lg:order-1">
         <Card className="border-regal-purple-400/15">
           <div className="flex items-center gap-2 mb-4">
             <MessageCircle className="w-4 h-4 text-regal-pink" />
@@ -267,7 +282,7 @@ export function TutorTool() {
         </Card>
       </aside>
 
-      <Card className="border-regal-purple-400/20 flex flex-col min-h-[560px] lg:min-h-[calc(100vh-280px)] p-0 overflow-hidden">
+      <Card className="border-regal-purple-400/20 flex flex-col min-h-[480px] sm:min-h-[560px] lg:min-h-[calc(100dvh-280px)] p-0 overflow-hidden order-1 lg:order-2">
         <div className="shrink-0 px-5 pt-5 pb-4 border-b border-white/10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
@@ -338,7 +353,11 @@ export function TutorTool() {
 
         {sessionMode === "live" ? (
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-            <VoiceLivePanel subject={subject} onTranscript={appendVoiceTranscript} />
+            <VoiceLivePanel
+              subject={subject}
+              studentName={studentName}
+              onTranscript={appendVoiceTranscript}
+            />
             {messages.length > 0 && (
               <div className="space-y-3 pt-2 border-t border-white/8">
                 <p className="text-[10px] font-bold text-muted uppercase tracking-wider">

@@ -21,6 +21,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { pushCloudSync, pullCloudSync } from "@/lib/cloud-sync";
 import { syncRegalProfileAvatar } from "@/lib/profile-avatar";
+import { REGAL_CLOUD } from "@/lib/branding";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Input";
@@ -142,7 +143,7 @@ export function ProfileClient({ profile, stats, subscription }: ProfileClientPro
       toast.error(result.error ?? "Cloud sync failed.");
       return;
     }
-    setMessage(`Backed up ${result.keys} local data keys to Cloudflare R2.`);
+    setMessage(`Backed up ${result.keys} local data keys to ${REGAL_CLOUD}.`);
     toast.success(`Backed up ${result.keys} items to cloud.`);
   };
 
@@ -161,7 +162,7 @@ export function ProfileClient({ profile, stats, subscription }: ProfileClientPro
       result.skipped
         ? "Local data is newer than your cloud backup — push first to update the cloud."
         : result.applied > 0
-          ? `Restored ${result.applied} items from Cloudflare R2.`
+          ? `Restored ${result.applied} items from ${REGAL_CLOUD}.`
           : "No cloud backup found yet — push to cloud first."
     );
     if (result.applied > 0) toast.success(`Restored ${result.applied} items from cloud.`);
@@ -376,12 +377,12 @@ export function ProfileClient({ profile, stats, subscription }: ProfileClientPro
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Cloud className="w-4 h-4 text-regal-purple-300" />
-                Cloud sync (R2)
+                {REGAL_CLOUD} sync
               </CardTitle>
             </CardHeader>
             <p className="text-sm text-muted leading-relaxed">
-              Back up tool drafts, CV entries, courses, mentor chats, and exam plans to
-              Cloudflare R2. Use Push before switching devices, then Pull on the new device.
+              Back up tool drafts, CV entries, courses, mentor chats, and exam plans to{" "}
+              {REGAL_CLOUD}. Use Push before switching devices, then Pull on the new device.
             </p>
             <div className="flex flex-wrap gap-2 mt-4">
               <Button variant="secondary" size="sm" onClick={pushToCloud} disabled={cloudSyncing}>

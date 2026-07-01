@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Mail, Key, Link2, Loader2 } from "lucide-react";
+import { Mail, Key, Link2, Loader2, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   REGAL_MAIL_DOMAIN,
@@ -14,8 +14,8 @@ import {
 } from "@/lib/regal-mail";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
+import { REGAL_AI } from "@/lib/branding";
 
 type AuthMode = "password" | "magic-link";
 
@@ -99,41 +99,55 @@ export function LoginForm({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className={compact ? "w-full" : "min-h-screen flex items-center justify-center p-4"}>
-      <div className="w-full max-w-md">
+      <div className="w-full">
         {!compact && (
-        <div className="text-center mb-8">
-          <Image
-            src="/logo.png"
-            alt="Regal Student Companion"
-            width={80}
-            height={80}
-            className="mx-auto rounded-2xl mb-4 shadow-2xl shadow-regal-purple-500/30"
-          />
-          <h1 className="text-3xl font-bold regal-gradient-text mb-2">
-            Regal Student Companion
-          </h1>
-          <p className="text-muted text-sm">
-            Your all-in-one academic workspace — powered by Regal Mail &{" "}
-            <span className="text-regal-pink font-medium">Regal AI</span>
-          </p>
-          <div className="flex justify-center mt-3">
-            <RegalAIBadge />
-          </div>
-        </div>
-        )}
-
-        {compact && (
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
-            <p className="text-sm text-muted">Sign in with your Regal Mail account</p>
-            <div className="mt-3">
+          <div className="text-center mb-8">
+            <Image
+              src="/logo.png"
+              alt="Regal Student Companion"
+              width={80}
+              height={80}
+              className="mx-auto rounded-2xl mb-4 shadow-2xl shadow-regal-purple-500/30"
+            />
+            <h1 className="text-3xl font-bold regal-gradient-text mb-2">
+              Regal Student Companion
+            </h1>
+            <p className="text-muted text-sm">
+              Your all-in-one academic workspace — powered by Regal Mail &{" "}
+              <span className="text-regal-pink font-medium">{REGAL_AI}</span>
+            </p>
+            <div className="flex justify-center mt-3">
               <RegalAIBadge />
             </div>
           </div>
         )}
 
-        <Card className={compact ? "border-regal-purple-400/20 shadow-xl shadow-regal-purple-500/10" : ""}>
-          <div className="flex gap-2 mb-6 p-1 rounded-xl bg-black/30 border border-white/10">
+        {compact && (
+          <div className="mb-6 lg:mb-8">
+            <div className="hidden lg:flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-regal-pink" />
+              <RegalAIBadge />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1.5 tracking-tight">
+              Welcome back
+            </h2>
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
+              Sign in with your Regal Mail account to open your workspace
+            </p>
+            <div className="flex lg:hidden mt-3">
+              <RegalAIBadge />
+            </div>
+          </div>
+        )}
+
+        <div
+          className={
+            compact
+              ? "rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] backdrop-blur-xl p-5 sm:p-7 shadow-2xl shadow-black/40"
+              : "rounded-2xl border border-white/10 glass-panel p-6"
+          }
+        >
+          <div className="flex gap-1.5 mb-6 p-1 rounded-xl bg-black/40 border border-white/10">
             {(
               [
                 { id: "password" as const, label: "Password", icon: Key },
@@ -147,13 +161,13 @@ export function LoginForm({ compact = false }: { compact?: boolean }) {
                   setMode(tab.id);
                   setStatus(null);
                 }}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-2 py-3 sm:py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all min-h-[44px] ${
                   mode === tab.id
-                    ? "bg-regal-purple-500/30 text-white border border-regal-purple-400/30"
-                    : "text-muted hover:text-white"
+                    ? "bg-regal-purple-500/35 text-white border border-regal-purple-400/40 shadow-sm shadow-regal-purple-500/20"
+                    : "text-muted hover:text-white border border-transparent"
                 }`}
               >
-                <tab.icon className="w-3.5 h-3.5" />
+                <tab.icon className="w-4 h-4 shrink-0" />
                 {tab.label}
               </button>
             ))}
@@ -161,7 +175,8 @@ export function LoginForm({ compact = false }: { compact?: boolean }) {
 
           {status && (
             <div
-              className={`mb-4 p-3 rounded-xl text-sm ${
+              role="alert"
+              className={`mb-5 p-3.5 rounded-xl text-sm leading-relaxed ${
                 status.type === "error"
                   ? "bg-red-500/10 border border-red-500/30 text-red-200"
                   : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-200"
@@ -176,15 +191,18 @@ export function LoginForm({ compact = false }: { compact?: boolean }) {
               <div>
                 <Label>Regal Mail address</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
                   <Input
-                    type="text"
+                    type="email"
+                    inputMode="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
                     required
                     autoComplete="username"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={`you@${REGAL_MAIL_DOMAIN}`}
-                    className="pl-10"
+                    className="pl-10 min-h-[48px] text-base sm:text-sm"
                   />
                 </div>
               </div>
@@ -197,6 +215,7 @@ export function LoginForm({ compact = false }: { compact?: boolean }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Your Regal Mail password"
+                  className="min-h-[48px] text-base sm:text-sm"
                 />
               </div>
               {email && !emailValid && (
@@ -206,11 +225,11 @@ export function LoginForm({ compact = false }: { compact?: boolean }) {
               )}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full min-h-[48px] text-base sm:text-sm font-semibold"
                 disabled={loading || !emailValid || !password.trim()}
               >
                 {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   "Sign in with Regal Mail"
                 )}
@@ -221,25 +240,31 @@ export function LoginForm({ compact = false }: { compact?: boolean }) {
               <div>
                 <Label>Regal Mail address</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
                   <Input
-                    type="text"
+                    type="email"
+                    inputMode="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
                     required
                     autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={`you@${REGAL_MAIL_DOMAIN}`}
-                    className="pl-10"
+                    className="pl-10 min-h-[48px] text-base sm:text-sm"
                   />
                 </div>
               </div>
+              <p className="text-xs text-muted leading-relaxed">
+                We&apos;ll email you a one-time link — no password needed.
+              </p>
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full min-h-[48px] text-base sm:text-sm font-semibold"
                 disabled={loading || !emailValid}
               >
                 {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   "Email me a sign-in link"
                 )}
@@ -247,18 +272,18 @@ export function LoginForm({ compact = false }: { compact?: boolean }) {
             </form>
           )}
 
-          <p className="mt-4 text-center text-xs text-muted">
+          <p className="mt-5 pt-5 border-t border-white/8 text-center text-xs text-muted">
             Same account as{" "}
             <a
               href={REGAL_MAIL_WEB_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-regal-pink hover:underline"
+              className="text-regal-pink hover:underline font-medium"
             >
               regalmail.me
             </a>
           </p>
-        </Card>
+        </div>
       </div>
     </div>
   );

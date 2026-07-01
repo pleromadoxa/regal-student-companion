@@ -98,7 +98,7 @@ export function ScheduleTool() {
   const supabase = createClient();
   const [blocks, setBlocks] = useState<ScheduleBlock[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<"grid" | "list">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [now, setNow] = useState(() => new Date());
@@ -109,6 +109,12 @@ export function ScheduleTool() {
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      setView("grid");
+    }
   }, []);
 
   const loadBlocks = useCallback(async () => {

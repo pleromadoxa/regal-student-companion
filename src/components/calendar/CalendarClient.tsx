@@ -223,7 +223,7 @@ export function CalendarClient({
                     </div>
                     <button
                       onClick={() => deleteEvent(event.id)}
-                      className="opacity-0 group-hover:opacity-100 text-muted hover:text-red-300"
+                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted hover:text-red-300"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

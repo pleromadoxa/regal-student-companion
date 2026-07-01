@@ -11,6 +11,7 @@ import {
   Sigma,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { REGAL_AI, REGAL_CLOUD } from "@/lib/branding";
 
 const PHRASES = [
   "Summarizing lecture notes…",
@@ -46,7 +47,7 @@ export function EducationAiScene() {
   }, []);
 
   return (
-    <div className="relative h-full min-h-[420px] flex flex-col items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-regal-purple-900/40 via-[#0a0612] to-regal-purple-950/60 p-8">
+    <div className="relative h-full min-h-[280px] sm:min-h-[360px] lg:min-h-[420px] flex flex-col items-center justify-center overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-br from-regal-purple-900/40 via-[#0a0612] to-regal-purple-950/60 p-5 sm:p-8">
       {/* Grid backdrop */}
       <div
         className="absolute inset-0 opacity-[0.15] edu-grid-bg"
@@ -105,8 +106,8 @@ export function EducationAiScene() {
       <div className="relative z-10 mt-10 grid grid-cols-3 gap-3 w-full max-w-sm">
         {[
           { label: "Tools", value: "21+" },
-          { label: "AI models", value: "CF + Gemini" },
-          { label: "Sync", value: "Cloud R2" },
+          { label: "AI", value: REGAL_AI },
+          { label: "Sync", value: REGAL_CLOUD },
         ].map((s) => (
           <div
             key={s.label}

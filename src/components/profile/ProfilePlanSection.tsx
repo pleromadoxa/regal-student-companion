@@ -1,6 +1,7 @@
 "use client";
 
 import { CreditCard, Sparkles, Zap } from "lucide-react";
+import { USER_FACING } from "@/lib/branding";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { PricingCards } from "@/components/pricing/PricingCards";
 import { PLANS, type PlanId } from "@/lib/plans";
@@ -36,7 +37,7 @@ export function ProfilePlanSection({
             Plans & billing
           </CardTitle>
           <CardDescription>
-            Paystack powers upgrades — add keys to your environment when ready
+            {USER_FACING.securePayments} — cancel anytime from your profile
           </CardDescription>
         </CardHeader>
         <div className="relative px-6 pb-6 space-y-4">

@@ -2,6 +2,7 @@
 
 import { Mic, MicOff, Radio, Sparkles, Volume2 } from "lucide-react";
 import { REGAL_AI_NAME } from "@/lib/regal-ai";
+import { REGAL_AI } from "@/lib/branding";
 import { useRegalLiveVoice, type VoiceTranscript } from "@/hooks/useRegalLiveVoice";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -65,12 +66,13 @@ function VoiceOrb({ status }: { status: keyof typeof STATUS_LABELS }) {
 
 type VoiceLivePanelProps = {
   subject: string;
+  studentName?: string;
   onTranscript?: (entry: VoiceTranscript) => void;
 };
 
-export function VoiceLivePanel({ subject, onTranscript }: VoiceLivePanelProps) {
+export function VoiceLivePanel({ subject, studentName, onTranscript }: VoiceLivePanelProps) {
   const { status, mode, error, userTranscript, aiTranscript, isActive, start, stop } =
-    useRegalLiveVoice({ subject, onTranscript });
+    useRegalLiveVoice({ subject, studentName, onTranscript });
 
   return (
     <div className="rounded-2xl border border-regal-purple-400/25 bg-gradient-to-b from-regal-purple-500/10 via-transparent to-regal-pink/5 p-5 sm:p-6">
@@ -83,10 +85,10 @@ export function VoiceLivePanel({ subject, onTranscript }: VoiceLivePanelProps) {
             <p className="text-sm font-semibold text-white">Regal Live Voice</p>
             <p className="text-[10px] text-muted">
               {mode === "live"
-                ? "Gemini Live · real-time audio"
+                ? `${REGAL_AI} Live · real-time audio`
                 : mode === "fallback"
                   ? "Browser voice · speak & listen"
-                  : "Like Gemini Live — talk to your tutor"}
+                  : `Talk to your ${REGAL_AI} tutor in real time`}
             </p>
           </div>
         </div>
@@ -102,8 +104,9 @@ export function VoiceLivePanel({ subject, onTranscript }: VoiceLivePanelProps) {
       <p className="text-center text-sm text-white/80 mt-4 mb-1 font-medium">
         {STATUS_LABELS[status]}
       </p>
-      <p className="text-center text-[11px] text-muted mb-5">
-        Subject: {subject} · hands-free tutoring
+      <p className="text-center text-[11px] text-muted mb-5 px-2">
+        Subject: {subject}
+        {studentName ? ` · tutoring ${studentName.split(/\s+/)[0]}` : ""} · hands-free
       </p>
 
       {(userTranscript || aiTranscript) && (

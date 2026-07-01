@@ -37,7 +37,11 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
 
 body {
   background:
@@ -46,6 +50,29 @@ body {
     var(--background);
   color: var(--foreground);
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.safe-area-body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.auth-mesh-bg {
+  background-image:
+    radial-gradient(at 40% 20%, rgba(138, 79, 255, 0.25) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(244, 114, 182, 0.15) 0px, transparent 45%),
+    radial-gradient(at 0% 50%, rgba(59, 7, 100, 0.4) 0px, transparent 50%);
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 .glass-panel {

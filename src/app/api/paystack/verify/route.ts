@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { verifyTransaction, isPaystackConfigured } from "@/lib/paystack";
 import { activatePlan } from "@/lib/subscription";
+import { USER_FACING } from "@/lib/branding";
 import type { PlanId } from "@/lib/plans";
 
 export async function GET(request: NextRequest) {
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isPaystackConfigured()) {
-    return NextResponse.json({ error: "Paystack not configured" }, { status: 503 });
+    return NextResponse.json({ error: USER_FACING.paymentUnavailable }, { status: 503 });
   }
 
   const supabase = await createClient();

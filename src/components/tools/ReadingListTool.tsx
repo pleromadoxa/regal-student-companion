@@ -142,7 +142,7 @@ function BookCard({
           <button
             type="button"
             onClick={() => onDelete(book.id)}
-            className="p-1 rounded-lg text-muted hover:text-red-300 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 rounded-lg text-muted hover:text-red-300 hover:bg-red-500/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
             aria-label="Delete book"
           >
             <Trash2 className="w-3.5 h-3.5" />

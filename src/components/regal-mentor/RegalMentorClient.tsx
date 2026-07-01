@@ -189,7 +189,7 @@ export function RegalMentorClient({
                         setCopied(m.id);
                         setTimeout(() => setCopied(null), 2000);
                       }}
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 rounded text-white/40 hover:text-white"
+                      className="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1 rounded text-white/40 hover:text-white"
                     >
                       {copied === m.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     </button>

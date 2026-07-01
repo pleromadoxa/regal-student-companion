@@ -303,7 +303,7 @@ function StudyChecklist({
                 <button
                   type="button"
                   onClick={() => removeItem(item.id)}
-                  className="opacity-0 group-hover:opacity-100 text-muted hover:text-red-300 transition-opacity"
+                  className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted hover:text-red-300 transition-opacity"
                   aria-label="Remove item"
                 >
                   <X className="w-3 h-3" />

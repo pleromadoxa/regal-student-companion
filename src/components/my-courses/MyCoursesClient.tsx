@@ -388,7 +388,7 @@ export function MyCoursesClient({ userId }: { userId: string }) {
                     e.stopPropagation();
                     void removeSubject(subject.id);
                   }}
-                  className="absolute top-3 right-3 p-1.5 rounded-lg text-white/30 hover:text-red-300 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                  className="absolute top-3 right-3 p-1.5 rounded-lg text-white/30 hover:text-red-300 hover:bg-red-500/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -505,7 +505,7 @@ export function MyCoursesClient({ userId }: { userId: string }) {
                     e.stopPropagation();
                     void removeCourse(course.id);
                   }}
-                  className="absolute top-3 right-3 p-1.5 rounded-lg text-white/30 hover:text-red-300 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                  className="absolute top-3 right-3 p-1.5 rounded-lg text-white/30 hover:text-red-300 hover:bg-red-500/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

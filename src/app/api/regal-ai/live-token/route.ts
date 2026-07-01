@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Modality } from "@google/genai/node";
 import { createClient } from "@/lib/supabase/server";
 import { REGAL_AI_NAME } from "@/lib/regal-ai";
+import {
+  REGAL_LIVE_VOICE,
+  buildLiveTutorInstruction,
+  getStudentFirstName,
+} from "@/lib/regal-live-voice";
 import { LIVE_MODEL } from "@/lib/regal-live";
 import { checkVoiceUsage, incrementVoiceUsage } from "@/lib/subscription";
 import { clientIp, rateLimitMemory } from "@/lib/security";
@@ -34,8 +39,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = (await request.json().catch(() => ({}))) as { subject?: string };
+    const body = (await request.json().catch(() => ({}))) as {
+      subject?: string;
+      studentName?: string;
+    };
     const subject = typeof body.subject === "string" ? body.subject : "Math";
+
+    const { data: profile } = await supabase
+      .from("companion_profiles")
+      .select("display_name, email")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const studentFirstName = getStudentFirstName(
+      body.studentName ?? profile?.display_name,
+      profile?.email ?? user.email
+    );
 
     const client = new GoogleGenAI({ apiKey });
     const expireTime = new Date(Date.now() + 30 * 60 * 1000).toISOString();
@@ -52,7 +71,7 @@ export async function POST(request: NextRequest) {
             responseModalities: [Modality.AUDIO],
             speechConfig: {
               voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: "Kore" },
+                prebuiltVoiceConfig: { voiceName: REGAL_LIVE_VOICE },
               },
             },
             inputAudioTranscription: {},
@@ -60,7 +79,7 @@ export async function POST(request: NextRequest) {
             systemInstruction: {
               parts: [
                 {
-                  text: `You are ${REGAL_AI_NAME}, a warm expert academic tutor specializing in ${subject}. You are in a live voice session with a student. Speak naturally and conversationally — concise but clear. Explain concepts step by step, use examples, and encourage the student. Focus on ${subject} topics: concepts, homework help, and exam preparation.`,
+                  text: buildLiveTutorInstruction(subject, studentFirstName),
                 },
               ],
             },
@@ -79,6 +98,7 @@ export async function POST(request: NextRequest) {
       token: token.name,
       model: LIVE_MODEL,
       voiceRemaining: voiceUsage.remaining - 1,
+      studentFirstName,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Voice session unavailable";

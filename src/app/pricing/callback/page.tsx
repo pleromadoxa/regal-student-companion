@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { USER_FACING } from "@/lib/branding";
 import { PLANS, type PlanId } from "@/lib/plans";
 
 function CallbackContent() {
@@ -42,7 +43,7 @@ function CallbackContent() {
           <>
             <Loader2 className="w-12 h-12 animate-spin text-regal-purple-400 mx-auto mb-4" />
             <h1 className="text-xl font-bold text-white">Confirming payment…</h1>
-            <p className="text-sm text-muted mt-2">Please wait while Paystack verifies your transaction.</p>
+            <p className="text-sm text-muted mt-2">{USER_FACING.paymentPending}</p>
           </>
         )}
         {status === "success" && (

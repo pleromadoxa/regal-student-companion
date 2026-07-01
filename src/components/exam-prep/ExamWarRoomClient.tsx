@@ -32,6 +32,18 @@ type Exam = {
   exam_date: string;
 };
 
+const WAR_PLAN_KEY = (userId: string) => `regal-war-plan-content-${userId}`;
+
+type SavedWarPlan = {
+  plan: string;
+  title: string;
+  subject: string;
+  examDate: string;
+  weakAreas: string;
+  notes: string;
+  savedAt: string;
+};
+
 export function ExamWarRoomClient({ userId }: { userId: string }) {
   const [exams, setExams] = useState<Exam[]>([]);
   const [selectedExamId, setSelectedExamId] = useState("");
@@ -58,7 +70,16 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
 
   useEffect(() => {
     void loadExams();
-  }, [loadExams]);
+    const saved = readLocalJson<SavedWarPlan | null>(WAR_PLAN_KEY(userId), null);
+    if (saved?.plan) {
+      setPlan(saved.plan);
+      setTitle(saved.title);
+      setSubject(saved.subject);
+      setExamDate(saved.examDate);
+      setWeakAreas(saved.weakAreas);
+      setNotes(saved.notes);
+    }
+  }, [loadExams, userId]);
 
   useEffect(() => {
     const exam = exams.find((e) => e.id === selectedExamId);
@@ -96,14 +117,15 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
       });
       const cleaned = sanitizeAIContent(raw);
       setPlan(cleaned);
-      const history = readLocalJson<{ title: string; at: string }[]>(
-        `regal-war-plans-${userId}`,
-        []
-      );
-      writeLocalJson(`regal-war-plans-${userId}`, [
-        { title, at: new Date().toISOString() },
-        ...history,
-      ].slice(0, 20));
+      writeLocalJson(WAR_PLAN_KEY(userId), {
+        plan: cleaned,
+        title: title.trim(),
+        subject: subject.trim(),
+        examDate,
+        weakAreas,
+        notes,
+        savedAt: new Date().toISOString(),
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not generate battle plan");
     } finally {

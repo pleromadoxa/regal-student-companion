@@ -182,7 +182,7 @@ export function ResearchLabClient({
     <div className="space-y-6 page-enter">
       <PageHeader
         title="Regal AI Research Lab"
-        description="Notebook LM-style research — upload sources, generate insights, and chat with your materials"
+        description="Regal AI research workspace — upload sources, generate insights, and chat with your materials"
         regalAI
         action={
           <Button onClick={() => setShowNewProject(!showNewProject)}>
@@ -321,7 +321,7 @@ export function ResearchLabClient({
                     </div>
                     <button
                       onClick={() => deleteSource(s.id)}
-                      className="opacity-0 group-hover:opacity-100 text-muted hover:text-red-300 shrink-0"
+                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted hover:text-red-300 shrink-0"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>

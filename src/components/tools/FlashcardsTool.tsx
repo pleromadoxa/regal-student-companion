@@ -646,7 +646,7 @@ export function FlashcardsTool() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="opacity-0 group-hover:opacity-100"
+                              className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                               onClick={() => deleteCard(c.id)}
                               aria-label="Delete card"
                             >

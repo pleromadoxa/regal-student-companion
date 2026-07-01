@@ -22,7 +22,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const bucket = await getCompanionR2();
-    if (!bucket) return jsonResponse({ error: "R2 unavailable in this environment" }, 503);
+    if (!bucket) return jsonResponse({ error: "Regal Cloud storage unavailable" }, 503);
 
     const contentType = request.headers.get("Content-Type") ?? "application/octet-stream";
     await bucket.put(key, request.body, {
@@ -54,7 +54,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const bucket = await getCompanionR2();
-    if (!bucket) return jsonResponse({ error: "R2 unavailable in this environment" }, 503);
+    if (!bucket) return jsonResponse({ error: "Regal Cloud storage unavailable" }, 503);
 
     await bucket.delete(key);
     return jsonResponse({ ok: true });

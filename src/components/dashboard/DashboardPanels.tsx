@@ -109,7 +109,7 @@ export async function DashboardPanels({ userId }: { userId: string }) {
                 <RegalAIBadge />
               </div>
               <CardDescription className="mt-1">
-                Upload sources, generate summaries, and chat with your research — Notebook LM style.
+                Upload sources, generate summaries, and chat with your research — powered by Regal AI.
               </CardDescription>
             </div>
           </div>

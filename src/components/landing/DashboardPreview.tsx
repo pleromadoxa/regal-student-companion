@@ -12,6 +12,7 @@ import {
   Timer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { REGAL_CLOUD } from "@/lib/branding";
 
 const AI_PHRASES = [
   "Summarizing lecture notes…",
@@ -25,7 +26,7 @@ const AI_PHRASES = [
 const FEED_EVENTS = [
   { text: "Task marked done · Research Methods", icon: CheckCircle2 },
   { text: "Focus session · 25 min logged", icon: Timer },
-  { text: "Cloud backup synced to R2", icon: Cloud },
+  { text: `${REGAL_CLOUD} backup synced`, icon: Cloud },
   { text: "Streak extended · 7 days", icon: Flame },
   { text: "Course material generated", icon: BookOpen },
 ];
