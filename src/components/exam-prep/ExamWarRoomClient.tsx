@@ -58,6 +58,8 @@ type Exam = {
   exam_date: string;
 };
 
+type TabId = "briefing" | "arsenal" | "checklist";
+
 const MODULE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Swords,
   Map,
@@ -87,6 +89,56 @@ function saveState(userId: string, state: WarRoomState) {
   writeLocalJson(WAR_ROOM_STORAGE_KEY(userId), state);
 }
 
+function ChecklistPanel({
+  checklist,
+  checklistDone,
+  onToggle,
+  className,
+}: {
+  checklist: { id: string; text: string; done: boolean }[];
+  checklistDone: number;
+  onToggle: (id: string) => void;
+  className?: string;
+}) {
+  return (
+    <Card className={cn("border-white/10", className)}>
+      <div className="flex items-center gap-2 mb-4">
+        <CheckSquare className="w-4 h-4 text-emerald-400 shrink-0" />
+        <p className="font-semibold text-white">Exam day checklist</p>
+        <span className="text-xs text-muted ml-auto tabular-nums">
+          {checklistDone}/{checklist.length} done
+        </span>
+      </div>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {checklist.map((item) => (
+          <li key={item.id}>
+            <button
+              type="button"
+              onClick={() => onToggle(item.id)}
+              className={cn(
+                "w-full flex items-start gap-3 p-3 rounded-xl border text-left text-sm transition-colors min-h-[44px]",
+                item.done
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+                  : "border-white/10 hover:border-regal-purple-400/30 text-white/85"
+              )}
+            >
+              <span
+                className={cn(
+                  "w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5",
+                  item.done ? "bg-emerald-500 border-emerald-400" : "border-white/20"
+                )}
+              >
+                {item.done && <Check className="w-3 h-3 text-white" />}
+              </span>
+              <span className="leading-snug">{item.text}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
 export function ExamWarRoomClient({ userId }: { userId: string }) {
   const [exams, setExams] = useState<Exam[]>([]);
   const [selectedExamId, setSelectedExamId] = useState("");
@@ -97,7 +149,7 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
     DEFAULT_WAR_CHECKLIST.map((text, i) => ({ id: `c-${i}`, text, done: false }))
   );
   const [activeModule, setActiveModule] = useState<WarRoomModuleId>("full_plan");
-  const [activeTab, setActiveTab] = useState<"briefing" | "arsenal" | "checklist">("briefing");
+  const [activeTab, setActiveTab] = useState<TabId>("briefing");
   const [loadingModule, setLoadingModule] = useState<WarRoomModuleId | "all" | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -263,8 +315,12 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
   const completedModules = WAR_ROOM_MODULES.filter((m) => modules[m.id]?.content).length;
   const checklistDone = checklist.filter((c) => c.done).length;
 
+  const showBriefing = activeTab === "briefing";
+  const showArsenal = activeTab === "arsenal";
+  const showChecklist = activeTab === "checklist";
+
   return (
-    <div className="page-enter max-w-6xl mx-auto space-y-6">
+    <div className="page-enter w-full max-w-6xl mx-auto space-y-5 sm:space-y-6 pb-8">
       <PageHeader
         title="Exam War Room"
         description="World-class exam prep for WASSCE, BECE, JAMB, KCSE, Matric, SAT, GCSE, university finals, and professional licensure — powered by Regal AI."
@@ -278,23 +334,26 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
         }
       />
 
-      {/* Stats strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         {[
-          { label: "Days left", value: daysLeft ?? "—", tone: daysLeft !== null && daysLeft <= 3 ? "red" : "purple" },
-          { label: "Modules ready", value: `${completedModules}/6`, tone: "pink" },
-          { label: "Checklist", value: `${checklistDone}/${checklist.length}`, tone: "emerald" },
-          { label: "Study hrs/day", value: briefing.hoursPerDay, tone: "purple" },
+          { label: "Days left", value: daysLeft ?? "—" },
+          { label: "Modules ready", value: `${completedModules}/6` },
+          { label: "Checklist", value: `${checklistDone}/${checklist.length}` },
+          { label: "Study hrs/day", value: briefing.hoursPerDay },
         ].map((s) => (
           <Card key={s.label} className="p-3 sm:p-4 text-center">
             <p className="text-[10px] uppercase tracking-wider text-muted">{s.label}</p>
-            <p className="text-xl sm:text-2xl font-bold text-white mt-1 tabular-nums">{s.value}</p>
+            <p className="text-lg sm:text-2xl font-bold text-white mt-1 tabular-nums">{s.value}</p>
           </Card>
         ))}
       </div>
 
-      {/* Mobile tabs */}
-      <div className="flex gap-1 p-1 rounded-xl bg-black/30 border border-white/10 lg:hidden">
+      {/* Mobile / tablet tabs */}
+      <div
+        className="flex gap-1 p-1 rounded-xl bg-black/30 border border-white/10 xl:hidden"
+        role="tablist"
+        aria-label="Exam War Room sections"
+      >
         {(
           [
             { id: "briefing" as const, label: "Briefing" },
@@ -305,6 +364,8 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
           <button
             key={t.id}
             type="button"
+            role="tab"
+            aria-selected={activeTab === t.id}
             onClick={() => setActiveTab(t.id)}
             className={cn(
               "flex-1 py-2.5 rounded-lg text-xs font-semibold transition-colors min-h-[44px]",
@@ -316,15 +377,21 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-6">
-        {/* Briefing column */}
-        <div className={cn("lg:col-span-2 space-y-4", activeTab !== "briefing" && "hidden lg:block")}>
-          <Card className="border-rose-400/20 space-y-4">
+      <div className="grid xl:grid-cols-12 gap-5 sm:gap-6 items-start">
+        {/* Briefing — left column on desktop */}
+        <section
+          className={cn(
+            "xl:col-span-5 min-w-0",
+            !showBriefing && "hidden xl:block"
+          )}
+          aria-label="Mission briefing"
+        >
+          <Card className="border-rose-400/20 space-y-4 xl:sticky xl:top-6 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-rose-500 to-orange-600">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-rose-500 to-orange-600 shrink-0">
                 <Swords className="w-5 h-5 text-white" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-semibold text-white">Mission briefing</p>
                 <p className="text-xs text-muted">Exam system, subject, and targets</p>
               </div>
@@ -379,15 +446,6 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
                     {s.shortName} — {s.countries.slice(0, 2).join(", ")}
                   </option>
                 ))}
-                <optgroup label="All systems">
-                  {EXAM_SYSTEMS.filter((s) => !systemsInRegion.some((x) => x.id === s.id))
-                    .slice(0, 0)
-                    .map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.shortName}
-                      </option>
-                    ))}
-                </optgroup>
               </Select>
               {selectedSystem && (
                 <p className="text-[11px] text-muted mt-1.5 leading-relaxed">{selectedSystem.description}</p>
@@ -424,7 +482,7 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>Exam date *</Label>
                 <Input
@@ -445,7 +503,7 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>Target grade</Label>
                 <Input
@@ -528,167 +586,140 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
               )}
             </Button>
           </Card>
-        </div>
+        </section>
 
-        {/* Arsenal column */}
-        <div className={cn("lg:col-span-3 space-y-4", activeTab !== "arsenal" && "hidden lg:block")}>
-          <Card className="border-regal-purple-400/20 p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4 text-regal-pink" />
-              <p className="text-sm font-semibold text-white">Regal AI Arsenal</p>
-              <RegalAIBadge className="ml-auto" />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {WAR_ROOM_MODULES.map((mod) => {
-                const Icon = MODULE_ICONS[mod.icon] ?? Target;
-                const ready = Boolean(modules[mod.id]?.content);
-                const isLoading = loadingModule === mod.id || (loadingModule === "all" && !ready);
-                return (
-                  <button
-                    key={mod.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveModule(mod.id);
-                      if (modules[mod.id]?.content) return;
-                    }}
-                    className={cn(
-                      "text-left p-3 rounded-xl border transition-all",
-                      activeModule === mod.id
-                        ? "border-regal-purple-400/50 bg-regal-purple-500/15"
-                        : "border-white/10 hover:border-regal-purple-400/30 bg-white/[0.02]"
-                    )}
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className={cn("p-1.5 rounded-lg", ready ? "bg-emerald-500/20" : "bg-white/10")}>
-                        {isLoading ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-regal-pink" />
-                        ) : (
-                          <Icon className="w-4 h-4 text-regal-purple-300" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-white flex items-center gap-1">
-                          {mod.label}
-                          {ready && <Check className="w-3 h-3 text-emerald-400" />}
-                        </p>
-                        <p className="text-[10px] text-muted mt-0.5 line-clamp-2">{mod.description}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="shrink-0 h-8 px-2"
-                        disabled={loadingModule !== null}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void generateModule(mod.id);
-                        }}
-                      >
-                        {ready ? <RefreshCw className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                      </Button>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
-
-          {activeContent ? (
-            <Card className="border-regal-purple-400/20">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                <p className="text-sm font-semibold text-white">
-                  {WAR_ROOM_MODULES.find((m) => m.id === activeModule)?.label}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => void generateModule(activeModule)}
-                    disabled={loadingModule !== null}
-                  >
-                    <RefreshCw className={cn("w-3.5 h-3.5", loadingModule === activeModule && "animate-spin")} />
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      void navigator.clipboard.writeText(activeContent);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }}
-                  >
-                    {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      downloadTextFile(
-                        activeContent,
-                        `${briefing.title.replace(/\s+/g, "-").toLowerCase()}-${activeModule}.md`
-                      )
-                    }
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-              <div className="max-h-[65vh] overflow-y-auto pr-1">
-                <MarkdownContent content={activeContent} />
-              </div>
-            </Card>
-          ) : (
-            <Card className="py-14 text-center border-dashed border-white/10">
-              <Target className="w-10 h-10 text-white/20 mx-auto mb-3" />
-              <p className="text-sm text-white font-medium">No module selected</p>
-              <p className="text-xs text-muted mt-1 max-w-sm mx-auto">
-                Complete your briefing, then deploy the full arsenal or generate modules individually.
-              </p>
-            </Card>
+        {/* Arsenal + checklist — right column on desktop */}
+        <section
+          className={cn(
+            "xl:col-span-7 min-w-0 flex flex-col gap-5 sm:gap-6",
+            showBriefing && "hidden xl:flex"
           )}
-        </div>
-      </div>
+          aria-label="Arsenal and checklist"
+        >
+          <div className={cn("flex flex-col gap-5 sm:gap-6", !showArsenal && "hidden xl:flex")}>
+            <Card className="border-regal-purple-400/20 p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="w-4 h-4 text-regal-pink shrink-0" />
+                <p className="text-sm font-semibold text-white">Regal AI Arsenal</p>
+                <RegalAIBadge className="ml-auto shrink-0" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {WAR_ROOM_MODULES.map((mod) => {
+                  const Icon = MODULE_ICONS[mod.icon] ?? Target;
+                  const ready = Boolean(modules[mod.id]?.content);
+                  const isLoading = loadingModule === mod.id || (loadingModule === "all" && !ready);
+                  return (
+                    <div
+                      key={mod.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setActiveModule(mod.id)}
+                      onKeyDown={(e) => e.key === "Enter" && setActiveModule(mod.id)}
+                      className={cn(
+                        "text-left p-3 rounded-xl border transition-all cursor-pointer",
+                        activeModule === mod.id
+                          ? "border-regal-purple-400/50 bg-regal-purple-500/15"
+                          : "border-white/10 hover:border-regal-purple-400/30 bg-white/[0.02]"
+                      )}
+                    >
+                      <div className="flex items-start gap-2">
+                        <div className={cn("p-1.5 rounded-lg shrink-0", ready ? "bg-emerald-500/20" : "bg-white/10")}>
+                          {isLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-regal-pink" />
+                          ) : (
+                            <Icon className="w-4 h-4 text-regal-purple-300" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-white flex items-center gap-1">
+                            {mod.label}
+                            {ready && <Check className="w-3 h-3 text-emerald-400 shrink-0" />}
+                          </p>
+                          <p className="text-[10px] text-muted mt-0.5 line-clamp-2">{mod.description}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shrink-0 h-8 px-2"
+                          disabled={loadingModule !== null}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void generateModule(mod.id);
+                          }}
+                        >
+                          {ready ? <RefreshCw className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
 
-      {/* Checklist */}
-      <Card
-        className={cn(
-          "border-white/10",
-          activeTab !== "checklist" && "hidden lg:block"
-        )}
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <CheckSquare className="w-4 h-4 text-emerald-400" />
-          <p className="font-semibold text-white">Exam day checklist</p>
-          <span className="text-xs text-muted ml-auto">
-            {checklistDone}/{checklist.length} done
-          </span>
-        </div>
-        <ul className="grid sm:grid-cols-2 gap-2">
-          {checklist.map((item) => (
-            <li key={item.id}>
-              <button
-                type="button"
-                onClick={() => toggleCheck(item.id)}
-                className={cn(
-                  "w-full flex items-center gap-3 p-3 rounded-xl border text-left text-sm transition-colors min-h-[44px]",
-                  item.done
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-                    : "border-white/10 hover:border-regal-purple-400/30 text-white/85"
-                )}
-              >
-                <span
-                  className={cn(
-                    "w-5 h-5 rounded-md border flex items-center justify-center shrink-0",
-                    item.done ? "bg-emerald-500 border-emerald-400" : "border-white/20"
-                  )}
-                >
-                  {item.done && <Check className="w-3 h-3 text-white" />}
-                </span>
-                {item.text}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Card>
+            {activeContent ? (
+              <Card className="border-regal-purple-400/20 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                  <p className="text-sm font-semibold text-white">
+                    {WAR_ROOM_MODULES.find((m) => m.id === activeModule)?.label}
+                  </p>
+                  <div className="flex gap-2 shrink-0">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => void generateModule(activeModule)}
+                      disabled={loadingModule !== null}
+                    >
+                      <RefreshCw className={cn("w-3.5 h-3.5", loadingModule === activeModule && "animate-spin")} />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(activeContent);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        downloadTextFile(
+                          activeContent,
+                          `${briefing.title.replace(/\s+/g, "-").toLowerCase()}-${activeModule}.md`
+                        )
+                      }
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="max-h-[min(60vh,640px)] overflow-y-auto overflow-x-hidden pr-1">
+                  <MarkdownContent content={activeContent} />
+                </div>
+              </Card>
+            ) : (
+              <Card className="py-12 sm:py-14 text-center border-dashed border-white/10">
+                <Target className="w-10 h-10 text-white/20 mx-auto mb-3" />
+                <p className="text-sm text-white font-medium">No module selected</p>
+                <p className="text-xs text-muted mt-1 max-w-sm mx-auto px-4">
+                  Complete your briefing, then deploy the full arsenal or generate modules individually.
+                </p>
+              </Card>
+            )}
+          </div>
+
+          {/* Checklist: mobile tab OR always below arsenal on desktop */}
+          <ChecklistPanel
+            checklist={checklist}
+            checklistDone={checklistDone}
+            onToggle={toggleCheck}
+            className={cn(!showChecklist && "hidden xl:block")}
+          />
+        </section>
+      </div>
     </div>
   );
 }

@@ -144,8 +144,8 @@ export function AppShell({
                     )}
                   >
                     <Icon className="w-4 h-4 shrink-0 opacity-90" />
-                    <span className="truncate flex-1">{item.label}</span>
-                    {isRegalAI && <RegalAIBadge className="scale-90 origin-right" />}
+                    <span className="flex-1 leading-snug text-[12px] lg:text-[13px]">{item.label}</span>
+                    {isRegalAI && <RegalAIBadge className="scale-[0.82] origin-right shrink-0" />}
                   </Link>
                 );
               })}
@@ -192,7 +192,7 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-white/10 p-4 fixed inset-y-0 left-0 bg-[#08040f] z-30">
+      <aside className="hidden lg:flex flex-col w-[280px] shrink-0 border-r border-white/10 p-4 fixed inset-y-0 left-0 bg-[#08040f] z-30">
         <SidebarContent />
       </aside>
 
@@ -208,7 +208,7 @@ export function AppShell({
         </div>
       )}
 
-      <div className="flex-1 lg:ml-[260px] min-w-0">
+      <div className="flex-1 lg:ml-[280px] min-w-0">
         <header className="lg:hidden sticky top-0 z-40 flex items-center gap-3 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] border-b border-white/10 glass-panel backdrop-blur-xl">
           {inTool ? (
             <Link href="/tools" className="text-muted hover:text-white" aria-label="Back to tools">
@@ -229,7 +229,7 @@ export function AppShell({
             <MobilePageTitle />
           </div>
         </header>
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-[max(2rem,env(safe-area-inset-bottom))] overflow-x-hidden">{children}</main>
       </div>
     </div>
   );
