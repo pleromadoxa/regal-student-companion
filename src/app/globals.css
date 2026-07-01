@@ -1,0 +1,597 @@
+@import "tailwindcss";
+
+:root {
+  --regal-purple-50: #f5f0ff;
+  --regal-purple-300: #b88aff;
+  --regal-purple-400: #9b5cff;
+  --regal-purple-500: #8a4fff;
+  --regal-purple-600: #7b2cbf;
+  --regal-purple-700: #6b21a8;
+  --regal-purple-900: #3b0764;
+  --regal-pink: #f472b6;
+  --regal-pink-glow: #e879f9;
+  --background: #08040f;
+  --foreground: #f8f4ff;
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.07);
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --muted: #9d8bb8;
+  --glow: rgba(138, 79, 255, 0.15);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-regal-purple-300: var(--regal-purple-300);
+  --color-regal-purple-400: var(--regal-purple-400);
+  --color-regal-purple-500: var(--regal-purple-500);
+  --color-regal-purple-600: var(--regal-purple-600);
+  --color-regal-purple-700: var(--regal-purple-700);
+  --color-regal-purple-900: var(--regal-purple-900);
+  --color-regal-pink: var(--regal-pink);
+  --color-regal-pink-glow: var(--regal-pink-glow);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(107, 33, 168, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(244, 114, 182, 0.12) 0%, transparent 50%),
+    var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+.glass-panel {
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.glass-panel-hover {
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.glass-panel-hover:hover {
+  border-color: rgba(138, 79, 255, 0.35);
+  box-shadow: 0 8px 32px var(--glow);
+  transform: translateY(-2px);
+}
+
+.regal-gradient-text {
+  background: linear-gradient(135deg, #fff 20%, var(--regal-purple-300) 60%, var(--regal-pink) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.regal-ai-gradient {
+  background: linear-gradient(135deg, var(--regal-purple-500), var(--regal-pink));
+}
+
+.regal-btn-primary {
+  background: linear-gradient(135deg, var(--regal-purple-500) 0%, var(--regal-purple-700) 100%);
+  border: 1px solid rgba(244, 114, 182, 0.25);
+  box-shadow: 0 4px 20px rgba(138, 79, 255, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.regal-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(138, 79, 255, 0.45);
+}
+.regal-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.regal-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, rgba(138,79,255,0.25), rgba(244,114,182,0.15));
+  border: 1px solid rgba(244, 114, 182, 0.35);
+  color: #f0d4ff;
+}
+
+.page-enter {
+  animation: pageEnter 0.35s ease-out both;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes toastEnter {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.toast-enter { animation: toastEnter 0.25s ease-out both; }
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(138, 79, 255, 0.35); border-radius: 3px; }
+
+select option { background: #1a0a2e; color: white; }
+
+.wotd-glow {
+  animation: wotdPulse 4s ease-in-out infinite;
+}
+
+.wotd-word {
+  background: linear-gradient(135deg, #ffffff 0%, #d4b8ff 45%, #f472b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes wotdPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+@keyframes streakFlame {
+  0%, 100% {
+    transform: scale(1) rotate(-3deg);
+    filter: drop-shadow(0 0 10px rgba(251, 146, 60, 0.5));
+  }
+  33% {
+    transform: scale(1.06) rotate(2deg);
+    filter: drop-shadow(0 0 18px rgba(251, 146, 60, 0.75));
+  }
+  66% {
+    transform: scale(0.98) rotate(-1deg);
+    filter: drop-shadow(0 0 14px rgba(244, 114, 182, 0.35));
+  }
+}
+
+.streak-flame {
+  animation: streakFlame 1.8s ease-in-out infinite;
+}
+
+.focus-glow {
+  animation: focusGlow 4s ease-in-out infinite;
+}
+
+.focus-ring-active {
+  animation: focusRingPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes focusGlow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(1.08); }
+}
+
+@keyframes focusRingPulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.25)); }
+  50% { filter: drop-shadow(0 0 18px rgba(52, 211, 153, 0.55)); }
+}
+
+@keyframes focusCelebrate {
+  0% { opacity: 0; transform: scale(0.92); }
+  15% { opacity: 1; transform: scale(1); }
+  85% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+
+.focus-celebrate {
+  animation: focusCelebrate 2.8s ease-out forwards;
+}
+
+.focus-time-display {
+  background: linear-gradient(135deg, #ffffff 0%, #6ee7b7 40%, #b88aff 75%, #f472b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.focus-orbit {
+  animation: focusOrbit 12s linear infinite;
+}
+
+.focus-orbit-reverse {
+  animation: focusOrbit 18s linear infinite reverse;
+}
+
+.focus-breathe {
+  animation: focusBreathe 4s ease-in-out infinite;
+}
+
+.focus-shimmer-ring {
+  animation: focusShimmer 3s ease-in-out infinite;
+}
+
+@keyframes focusOrbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes focusBreathe {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.04); opacity: 0.85; }
+}
+
+@keyframes focusShimmer {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.focus-mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(52, 211, 153, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 100%, rgba(138, 79, 255, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(244, 114, 182, 0.06) 0%, transparent 60%);
+}
+
+/* ── Digital focus timer ── */
+.focus-digital-panel {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 60px rgba(138, 79, 255, 0.08);
+}
+
+.focus-digital-panel-running {
+  animation: digitalPanelPulse 2s ease-in-out infinite;
+}
+
+@keyframes digitalPanelPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+      0 12px 40px rgba(0, 0, 0, 0.45),
+      0 0 40px rgba(52, 211, 153, 0.12);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+      0 12px 40px rgba(0, 0, 0, 0.45),
+      0 0 70px rgba(138, 79, 255, 0.22);
+  }
+}
+
+.focus-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.03) 2px,
+    rgba(255, 255, 255, 0.03) 4px
+  );
+}
+
+.focus-digit-enter {
+  animation: digitEnter 0.42s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+@keyframes digitEnter {
+  from {
+    transform: translateY(70%) rotateX(-40deg);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  to {
+    transform: translateY(0) rotateX(0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.focus-colon-blink {
+  animation: colonBlink 1s step-end infinite;
+}
+
+@keyframes colonBlink {
+  0%, 45% { opacity: 1; text-shadow: 0 0 20px rgba(110, 231, 183, 0.8); }
+  50%, 100% { opacity: 0.2; text-shadow: none; }
+}
+
+.focus-progress-shimmer {
+  background-size: 200% 100%;
+  animation: progressShimmer 2s linear infinite;
+}
+
+@keyframes progressShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.focus-digital-glow {
+  text-shadow:
+    0 0 20px rgba(110, 231, 183, 0.5),
+    0 0 40px rgba(138, 79, 255, 0.35),
+    0 0 60px rgba(244, 114, 182, 0.2);
+}
+
+.focus-digital-glow-running {
+  animation: digitalGlowPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes digitalGlowPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 16px rgba(110, 231, 183, 0.45),
+      0 0 32px rgba(138, 79, 255, 0.3);
+  }
+  50% {
+    text-shadow:
+      0 0 28px rgba(110, 231, 183, 0.75),
+      0 0 56px rgba(138, 79, 255, 0.5),
+      0 0 80px rgba(244, 114, 182, 0.25);
+  }
+}
+
+/* Large stylish digital clock */
+.focus-clock-hero {
+  position: relative;
+  perspective: 600px;
+}
+
+.focus-clock-digits {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: #f3e8ff;
+  background: linear-gradient(
+    165deg,
+    #ffffff 0%,
+    #e9d5ff 35%,
+    #a78bfa 55%,
+    #f9a8d4 85%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 28px rgba(167, 139, 250, 0.45));
+}
+
+@supports not (-webkit-background-clip: text) {
+  .focus-clock-digits {
+    -webkit-text-fill-color: currentColor;
+    background: none;
+  }
+}
+
+.focus-clock-digits-compact {
+  font-size: clamp(4.5rem, 24vw, 7rem);
+}
+
+.focus-clock-digits-large {
+  font-size: clamp(6.5rem, 28vw, 11rem);
+}
+
+.focus-clock-secs {
+  opacity: 0.92;
+}
+
+.focus-clock-colon {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(110, 231, 183, 0.95);
+  text-shadow: 0 0 36px rgba(110, 231, 183, 0.7);
+  user-select: none;
+}
+
+.focus-clock-colon-compact {
+  font-size: clamp(4rem, 20vw, 6.25rem);
+  margin: 0 -0.06em;
+}
+
+.focus-clock-colon-large {
+  font-size: clamp(5.5rem, 24vw, 8.5rem);
+  margin: 0 -0.04em;
+}
+
+.focus-flip-pair {
+  display: inline-block;
+  animation: flipPair 0.45s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes flipPair {
+  from {
+    transform: translateY(35%) scale(0.92);
+    opacity: 0;
+    filter: blur(8px);
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.focus-clock-bevel {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(0, 0, 0, 0.2) 100%
+  );
+}
+
+.focus-clock-running .focus-clock-digits {
+  animation: clockGlow 2s ease-in-out infinite;
+}
+
+@keyframes clockGlow {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(110, 231, 183, 0.3)); }
+  50% { filter: drop-shadow(0 0 36px rgba(167, 139, 250, 0.55)); }
+}
+
+/* Education × AI auth & landing animations */
+.edu-grid-bg {
+  background-image:
+    linear-gradient(rgba(138, 79, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(138, 79, 255, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: eduGridDrift 24s linear infinite;
+}
+
+@keyframes eduGridDrift {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 32px 32px, 32px 32px; }
+}
+
+.edu-pulse-slow {
+  animation: eduPulseSlow 4s ease-in-out infinite;
+}
+
+.edu-delay-2 {
+  animation-delay: 2s;
+}
+
+@keyframes eduPulseSlow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.08); }
+}
+
+.edu-float {
+  animation: eduFloat 5s ease-in-out infinite;
+}
+
+@keyframes eduFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.edu-orbit-ring {
+  animation: eduOrbitRing 12s linear infinite;
+}
+
+.edu-orbit-ring-reverse {
+  animation: eduOrbitRing 18s linear infinite reverse;
+}
+
+@keyframes eduOrbitRing {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.edu-orbit-icon {
+  animation: eduOrbitIcon 10s linear infinite;
+  transform-origin: 0 0;
+}
+
+@keyframes eduOrbitIcon {
+  from { transform: rotate(0deg) translateX(88px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(88px) rotate(-360deg); }
+}
+
+.edu-typing-dot {
+  animation: eduTypingDot 1.2s ease-in-out infinite;
+}
+
+@keyframes eduTypingDot {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-4px); }
+}
+
+.edu-hero-float {
+  animation: eduHeroFloat 6s ease-in-out infinite;
+}
+
+@keyframes eduHeroFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.edu-stagger-in {
+  animation: eduStaggerIn 0.6s ease-out both;
+}
+
+@keyframes eduStaggerIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Landing dashboard preview */
+.dash-live-dot {
+  animation: dashLivePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dashLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+  50% { opacity: 0.85; transform: scale(1.15); box-shadow: 0 0 8px 2px rgba(52, 211, 153, 0.35); }
+}
+
+.dash-live-badge {
+  animation: dashBadgeGlow 3s ease-in-out infinite;
+}
+
+@keyframes dashBadgeGlow {
+  0%, 100% { box-shadow: 0 0 0 rgba(52, 211, 153, 0); }
+  50% { box-shadow: 0 0 12px rgba(52, 211, 153, 0.15); }
+}
+
+.dash-activity-row {
+  animation: dashRowEnter 0.5s ease-out both;
+}
+
+.dash-activity-row:nth-child(1) { animation-delay: 0.05s; }
+.dash-activity-row:nth-child(2) { animation-delay: 0.12s; }
+.dash-activity-row:nth-child(3) { animation-delay: 0.19s; }
+
+@keyframes dashRowEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dash-progress-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-progress-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+  animation: dashShimmer 2.2s ease-in-out infinite;
+}
+
+@keyframes dashShimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+.dash-ai-shimmer {
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(244, 114, 182, 0.08) 50%,
+    transparent 60%
+  );
+  animation: dashAiSweep 2.5s ease-in-out infinite;
+}
+
+@keyframes dashAiSweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}

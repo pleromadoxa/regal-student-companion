@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "regal-companion",
+  "main": "cloudflare-worker.mjs",
+  "compatibility_date": "2025-03-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "regal-companion"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "regal-companion-cache"
+    },
+    {
+      "binding": "COMPANION_FILES",
+      "bucket_name": "regal-companion"
+    }
+  ],
+  "ai": {
+    "binding": "AI",
+    "remote": true
+  },
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "regalcompanion.cloud", "custom_domain": true },
+    { "pattern": "www.regalcompanion.cloud", "custom_domain": true }
+  ],
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://xexnwcmqnelgzuqhkvtx.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhleG53Y21xbmVsZ3p1cWhrdnR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3ODY2MzMsImV4cCI6MjA5NDM2MjYzM30.h4zQHIbJXZdPJcjn9qkA9SOUuPGPYuQSeQUnnJni890",
+    "NEXT_PUBLIC_SITE_URL": "https://regalcompanion.cloud",
+    "REGAL_DOMAIN": "regalcompanion.cloud",
+    "CLOUDFLARE_AI_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+  }
+}

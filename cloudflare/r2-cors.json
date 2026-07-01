@@ -1,0 +1,16 @@
+[
+  {
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://regalcompanion.cloud",
+      "https://www.regalcompanion.cloud",
+      "https://regal-companion.pages.dev",
+      "https://regal-companion.pleromadoxa.workers.dev"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD", "POST", "DELETE"],
+    "AllowedHeaders": ["Content-Type", "Content-Length", "Content-MD5", "x-amz-*", "Authorization"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
