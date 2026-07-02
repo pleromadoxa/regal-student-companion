@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthUser } from "@/lib/supabase/auth-server";
-import { isCompanionAdmin, logAdminAction } from "@/lib/admin";
-import { createServiceClient, hasServiceRole } from "@/lib/supabase/service";
+import { isAdminGateError, requireAdminApi } from "@/lib/admin-api";
+import { logAdminAction } from "@/lib/admin";
 
 export async function GET() {
-  const user = await getAuthUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await isCompanionAdmin(user))) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  if (!hasServiceRole()) return NextResponse.json({ error: "Not configured" }, { status: 503 });
+  const gate = await requireAdminApi();
+  if (isAdminGateError(gate)) return gate.error;
+  const { supabase } = gate;
 
-  const service = createServiceClient();
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from("companion_support_tickets")
     .select("*")
     .order("created_at", { ascending: false })
@@ -23,12 +18,9 @@ export async function GET() {
 }
 
 export async function PATCH(request: NextRequest) {
-  const user = await getAuthUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await isCompanionAdmin(user))) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  if (!hasServiceRole()) return NextResponse.json({ error: "Not configured" }, { status: 503 });
+  const gate = await requireAdminApi();
+  if (isAdminGateError(gate)) return gate.error;
+  const { user, supabase } = gate;
 
   const body = (await request.json()) as {
     id?: string;
@@ -43,8 +35,7 @@ export async function PATCH(request: NextRequest) {
   if (body.priority) patch.priority = body.priority;
   if (body.adminNotes !== undefined) patch.admin_notes = body.adminNotes;
 
-  const service = createServiceClient();
-  const { error } = await service.from("companion_support_tickets").update(patch).eq("id", body.id);
+  const { error } = await supabase.from("companion_support_tickets").update(patch).eq("id", body.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   await logAdminAction(user.id, "support_update", "ticket", body.id, patch);

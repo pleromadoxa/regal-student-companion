@@ -10,6 +10,8 @@ interface CloudflareEnv {
   REGAL_DOMAIN: string;
   CLOUDFLARE_AI_MODEL?: string;
   GEMINI_API_KEY?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  PAYSTACK_SECRET_KEY?: string;
 }
 
 declare global {

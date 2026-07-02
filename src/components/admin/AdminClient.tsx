@@ -82,43 +82,48 @@ export function AdminClient({ adminEmail }: { adminEmail: string }) {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [planPatch, setPlanPatch] = useState({ planId: "graduate", status: "active" });
 
+  const parseApiError = async (res: Response, fallback: string) => {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? `${fallback} (${res.status})`);
+  };
+
   const loadStats = useCallback(async () => {
     const res = await fetch("/api/admin/stats");
-    if (!res.ok) throw new Error("Failed to load stats");
+    if (!res.ok) await parseApiError(res, "Failed to load stats");
     setStats(await res.json());
   }, []);
 
   const loadUsers = useCallback(async (q = "") => {
     const res = await fetch(`/api/admin/users?q=${encodeURIComponent(q)}`);
-    if (!res.ok) throw new Error("Failed to load users");
+    if (!res.ok) await parseApiError(res, "Failed to load users");
     const data = (await res.json()) as { users?: AdminUser[] };
     setUsers(data.users ?? []);
   }, []);
 
   const loadSubscriptions = useCallback(async () => {
     const res = await fetch("/api/admin/subscriptions");
-    if (!res.ok) throw new Error("Failed to load subscriptions");
+    if (!res.ok) await parseApiError(res, "Failed to load subscriptions");
     const data = (await res.json()) as { subscriptions?: Record<string, unknown>[] };
     setSubscriptions(data.subscriptions ?? []);
   }, []);
 
   const loadCoupons = useCallback(async () => {
     const res = await fetch("/api/admin/coupons");
-    if (!res.ok) throw new Error("Failed to load coupons");
+    if (!res.ok) await parseApiError(res, "Failed to load coupons");
     const data = (await res.json()) as { coupons?: Record<string, unknown>[] };
     setCoupons(data.coupons ?? []);
   }, []);
 
   const loadSupport = useCallback(async () => {
     const res = await fetch("/api/admin/support");
-    if (!res.ok) throw new Error("Failed to load support");
+    if (!res.ok) await parseApiError(res, "Failed to load support");
     const data = (await res.json()) as { tickets?: Record<string, unknown>[] };
     setTickets(data.tickets ?? []);
   }, []);
 
   const loadHealth = useCallback(async () => {
     const res = await fetch("/api/admin/health");
-    if (!res.ok) throw new Error("Failed to load health");
+    if (!res.ok) await parseApiError(res, "Failed to load health");
     setHealth(await res.json());
   }, []);
 

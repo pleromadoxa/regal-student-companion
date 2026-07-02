@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthUser } from "@/lib/supabase/auth-server";
-import { isCompanionAdmin } from "@/lib/admin";
-import { createServiceClient, hasServiceRole } from "@/lib/supabase/service";
+import { isAdminGateError, requireAdminApi } from "@/lib/admin-api";
+import { logAdminAction } from "@/lib/admin";
 
 export async function GET(request: NextRequest) {
-  const user = await getAuthUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await isCompanionAdmin(user))) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  if (!hasServiceRole()) {
-    return NextResponse.json({ error: "Service role not configured" }, { status: 503 });
-  }
+  const gate = await requireAdminApi();
+  if (isAdminGateError(gate)) return gate.error;
+  const { supabase } = gate;
 
   const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
-  const service = createServiceClient();
 
-  let query = service
+  let query = supabase
     .from("companion_profiles")
     .select(
       "id, email, display_name, avatar_url, engagement_points, focus_minutes, study_streak, created_at, updated_at"
@@ -34,10 +27,10 @@ export async function GET(request: NextRequest) {
   const ids = (profiles ?? []).map((p) => p.id);
   const [{ data: subs }, { data: members }] = await Promise.all([
     ids.length
-      ? service.from("companion_subscriptions").select("*").in("user_id", ids)
+      ? supabase.from("companion_subscriptions").select("*").in("user_id", ids)
       : Promise.resolve({ data: [] }),
     ids.length
-      ? service.from("companion_app_members").select("*").in("user_id", ids)
+      ? supabase.from("companion_app_members").select("*").in("user_id", ids)
       : Promise.resolve({ data: [] }),
   ]);
 
