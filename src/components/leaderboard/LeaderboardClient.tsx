@@ -66,7 +66,7 @@ export function LeaderboardClient({
     <div className="page-enter space-y-6 max-w-3xl mx-auto">
       <PageHeader
         title="Leaderboard"
-        description="Compete with students across Regal Companion. Earn points from focus sessions, Regal AI, and completed tasks."
+        description="Compete with students active on Regal Student Companion — only verified platform activity counts, not all Regal Mail accounts."
       />
 
       {myProfile && (
@@ -135,7 +135,7 @@ export function LeaderboardClient({
           <Trophy className="w-10 h-10 text-muted mx-auto mb-3 opacity-50" />
           <p className="text-white font-medium">No rankings yet</p>
           <p className="text-sm text-muted mt-1 max-w-sm mx-auto">
-            Complete tasks, run focus sessions, and use Regal AI to climb the board.
+            Complete tasks, run focus sessions, and use Regal AI on Regal Student Companion to climb the board.
           </p>
           <div className="flex flex-wrap justify-center gap-2 mt-4">
             <Link href="/tasks" className="text-sm text-regal-purple-300 hover:text-white">

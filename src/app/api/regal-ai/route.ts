@@ -456,7 +456,14 @@ Rules:
 
     await Promise.all([
       incrementAiUsage(supabase, user.id),
-      supabase.rpc("companion_increment_engagement", { delta: 5 }),
+      supabase.rpc("companion_log_activity", {
+        p_action: "regal_ai",
+        p_category: "ai",
+        p_label: `Regal AI: ${action}`,
+        p_metadata: { regal_action: action },
+        p_points_delta: 5,
+        p_path: null,
+      }),
     ]);
 
     return NextResponse.json({

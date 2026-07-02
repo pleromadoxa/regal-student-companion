@@ -27,6 +27,8 @@ import {
   Swords,
   PenLine,
   Mail,
+  Shield,
+  ScrollText,
 } from "lucide-react";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -57,13 +59,17 @@ const ICONS = {
   Crown,
   Swords,
   PenLine,
+  Shield,
+  ScrollText,
 } as const;
 
 export function AppShell({
   profile,
+  isAdmin = false,
   children,
 }: {
   profile: CompanionProfile | null;
+  isAdmin?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -115,6 +121,36 @@ export function AppShell({
         <Mail className="w-4 h-4 shrink-0" />
         {REGAL_MAIL_LABEL}
       </a>
+
+      {isAdmin && (
+        <Link
+          href="/admin"
+          onClick={() => setMobileOpen(false)}
+          className={cn(
+            "mb-4 flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px] font-semibold border transition-colors",
+            pathname.startsWith("/admin")
+              ? "bg-amber-500/20 border-amber-400/40 text-amber-100"
+              : "border-amber-500/25 text-amber-200/90 hover:bg-amber-500/10 hover:text-amber-100"
+          )}
+        >
+          <Shield className="w-4 h-4 shrink-0" />
+          Admin Console
+        </Link>
+      )}
+
+      <Link
+        href="/activity"
+        onClick={() => setMobileOpen(false)}
+        className={cn(
+          "mb-4 flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-medium border border-white/8 transition-colors",
+          pathname === "/activity"
+            ? "bg-regal-purple-500/20 text-white border-regal-purple-400/30"
+            : "text-muted hover:text-white hover:bg-white/5"
+        )}
+      >
+        <ScrollText className="w-4 h-4 shrink-0" />
+        Activity Log
+      </Link>
 
       <nav className="flex-1 space-y-5 overflow-y-auto pr-1">
         {NAV_SECTIONS.map((section) => (

@@ -20,6 +20,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/exam-prep": "Exam War Room",
   "/regal-mentor": "Regal Mentor",
   "/achievements": "Achievements",
+  "/activity": "Activity Log",
+  "/admin": "Admin Console",
 };
 
 export function MobilePageTitle() {

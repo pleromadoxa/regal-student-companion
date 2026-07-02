@@ -211,7 +211,7 @@ export function TasksClient({ initialTasks }: { initialTasks: Task[] }) {
       return;
     }
     if (status === "done" && prev?.status !== "done") {
-      void incrementEngagement(3);
+      void incrementEngagement(3, "Completed a task", "task_complete");
       toast.success("Task complete — +3 engagement points!");
     }
     await refresh();

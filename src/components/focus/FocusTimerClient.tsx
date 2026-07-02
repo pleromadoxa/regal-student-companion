@@ -17,6 +17,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { logActivity } from "@/lib/activity-log";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -423,7 +424,12 @@ export function FocusTimerCore({
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
-      await supabase.rpc("companion_increment_engagement", { delta: 10 });
+      await logActivity({
+        action: "focus_session",
+        category: "productivity",
+        label: `Completed ${duration} min focus session`,
+        pointsDelta: 10,
+      });
       setFocusMinutes(newMinutes);
     }
     onSessionComplete?.();

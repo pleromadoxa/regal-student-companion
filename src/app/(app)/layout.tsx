@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { AppShell } from "@/components/layout/AppShell";
+import { ActivityTracker } from "@/components/activity/ActivityTracker";
 import { ToastProvider } from "@/components/ui/Toast";
 import { getAuthUser, getCompanionProfile } from "@/lib/supabase/auth-server";
+import { isCompanionAdmin } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/server";
 import { syncRegalProfileAvatar } from "@/lib/profile-avatar";
 
@@ -42,9 +44,12 @@ export default async function AppLayout({
     profile = await getCompanionProfile(user.id);
   }
 
+  const isAdmin = await isCompanionAdmin(user);
+
   return (
     <ToastProvider>
-      <AppShell profile={profile}>{children}</AppShell>
+      <ActivityTracker />
+      <AppShell profile={profile} isAdmin={isAdmin}>{children}</AppShell>
     </ToastProvider>
   );
 }
