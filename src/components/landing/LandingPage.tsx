@@ -83,7 +83,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-white/10 backdrop-blur-xl bg-[#08040f]/80">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <Image src="/logo.png" alt="" width={47} height={47} className="rounded-lg" />
+            <Image src="/logo.png" alt="" width={64} height={64} className="rounded-xl shadow-lg shadow-regal-purple-500/25" />
             <span className="font-bold text-sm hidden sm:block">Regal Companion</span>
           </Link>
           <nav className="hidden md:flex items-center gap-8 text-sm text-muted">

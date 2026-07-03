@@ -52,6 +52,10 @@ export interface StudyCircle {
   owner_id: string;
   is_public: boolean;
   created_at: string;
+  active_call_id?: string | null;
+  calls_enabled?: boolean;
+  avatar_url?: string | null;
+  topic_tags?: string[] | null;
 }
 
 export interface CircleMessage {
@@ -60,6 +64,10 @@ export interface CircleMessage {
   user_id: string;
   content: string;
   created_at: string;
+  is_ai?: boolean;
+  reply_to?: string | null;
+  reactions?: Record<string, string[]>;
+  metadata?: Record<string, unknown>;
   profile?: { display_name: string | null; email?: string };
 }
 

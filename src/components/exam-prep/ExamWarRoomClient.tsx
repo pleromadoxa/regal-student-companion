@@ -701,11 +701,9 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
                 </div>
               </Card>
             ) : (
-              <Card className="py-12 sm:py-14 text-center border-dashed border-white/10">
-                <Target className="w-10 h-10 text-white/20 mx-auto mb-3" />
-                <p className="text-sm text-white font-medium">No module selected</p>
-                <p className="text-xs text-muted mt-1 max-w-sm mx-auto px-4">
-                  Complete your briefing, then deploy the full arsenal or generate modules individually.
+              <Card className="py-8 text-center border-dashed border-white/5">
+                <p className="text-xs text-muted px-4">
+                  Select a module above, or deploy the full arsenal from your briefing.
                 </p>
               </Card>
             )}

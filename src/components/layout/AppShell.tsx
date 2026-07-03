@@ -93,14 +93,14 @@ export function AppShell({
         <Image
           src="/logo.png"
           alt="Regal Student Companion"
-          width={57}
-          height={57}
-          className="rounded-xl shadow-lg shadow-regal-purple-500/20 group-hover:scale-105 transition-transform"
+          width={88}
+          height={88}
+          className="rounded-2xl shadow-xl shadow-regal-purple-500/25 group-hover:scale-105 transition-transform"
           priority
         />
         <div>
-          <p className="text-sm font-bold text-white leading-tight">Regal Student</p>
-          <p className="text-xs text-regal-pink font-medium">Companion</p>
+          <p className="text-base font-bold text-white leading-tight">Regal Student</p>
+          <p className="text-sm text-regal-pink font-medium">Companion</p>
         </div>
       </Link>
 
@@ -260,7 +260,7 @@ export function AppShell({
               <Menu className="w-5 h-5" />
             </button>
           )}
-          <Image src="/logo.png" alt="" width={36} height={36} className="rounded-lg" aria-hidden />
+          <Image src="/logo.png" alt="" width={52} height={52} className="rounded-xl shadow-md shadow-regal-purple-500/20" aria-hidden />
           <div className="min-w-0 flex-1">
             <MobilePageTitle />
           </div>

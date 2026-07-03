@@ -17,7 +17,8 @@
     "setup:worker-domain": "node scripts/setup-worker-domain.mjs",
     "test:exam-war-room": "npx tsx scripts/test-exam-war-room.ts",
     "test:admin-e2e": "npx tsx scripts/test-admin-e2e.ts",
-    "test:e2e": "npm run test:exam-war-room && npm run test:admin-e2e"
+    "test:study-circles-e2e": "npx tsx scripts/test-study-circles-e2e.ts",
+    "test:e2e": "npm run test:exam-war-room && npm run test:admin-e2e && npm run test:study-circles-e2e"
   },
   "dependencies": {
     "@google/genai": "^2.8.0",

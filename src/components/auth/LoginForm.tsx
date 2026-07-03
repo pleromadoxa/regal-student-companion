@@ -105,9 +105,9 @@ export function LoginForm({ compact = false }: { compact?: boolean }) {
             <Image
               src="/logo.png"
               alt="Regal Student Companion"
-              width={80}
-              height={80}
-              className="mx-auto rounded-2xl mb-4 shadow-2xl shadow-regal-purple-500/30"
+              width={112}
+              height={112}
+              className="mx-auto rounded-2xl mb-4 shadow-2xl shadow-regal-purple-500/40"
             />
             <h1 className="text-3xl font-bold regal-gradient-text mb-2">
               Regal Student Companion

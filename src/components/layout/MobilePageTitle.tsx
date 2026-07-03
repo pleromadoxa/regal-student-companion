@@ -36,6 +36,9 @@ export function MobilePageTitle() {
       </p>
     );
   }
+  if (pathname.startsWith("/study-circles/join/")) {
+    return <p className="text-sm font-semibold text-white truncate">Join study circle</p>;
+  }
   const title = PAGE_TITLES[pathname] ?? "Regal Companion";
   return <p className="text-sm font-semibold text-white truncate">{title}</p>;
 }

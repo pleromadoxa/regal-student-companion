@@ -2,10 +2,14 @@ import { cn } from "@/lib/utils";
 
 export function Input({
   className,
+  ref,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement>) {
+}: React.InputHTMLAttributes<HTMLInputElement> & {
+  ref?: React.Ref<HTMLInputElement>;
+}) {
   return (
     <input
+      ref={ref}
       className={cn(
         "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none transition-colors focus:border-regal-purple-400 focus:ring-1 focus:ring-regal-purple-400/50",
         className

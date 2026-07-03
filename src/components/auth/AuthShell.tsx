@@ -48,9 +48,9 @@ export function AuthShell() {
               <Image
                 src="/logo.png"
                 alt=""
-                width={72}
-                height={72}
-                className="relative rounded-2xl shadow-2xl shadow-regal-purple-500/30"
+                width={96}
+                height={96}
+                className="relative rounded-2xl shadow-2xl shadow-regal-purple-500/40"
                 priority
               />
             </div>
@@ -129,7 +129,7 @@ export function AuthShell() {
                 <ArrowLeft className="w-3 h-3" /> Home
               </Link>
               <div className="flex items-center gap-3">
-                <Image src="/logo.png" alt="" width={52} height={52} className="rounded-xl shadow-lg" />
+                <Image src="/logo.png" alt="" width={72} height={72} className="rounded-2xl shadow-lg shadow-regal-purple-500/30" />
                 <div>
                   <h1 className="text-lg font-bold text-white leading-tight">Sign in</h1>
                   <p className="text-xs text-muted mt-0.5">Regal Mail students</p>
