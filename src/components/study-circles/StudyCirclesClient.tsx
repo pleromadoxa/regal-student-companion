@@ -18,8 +18,8 @@ import {
   Smile,
   Phone,
   Video,
-  Lock,
   Reply,
+  Pin,
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -35,12 +35,14 @@ import {
   buildInviteUrl,
   createCircleInvite,
   toggleReaction,
-  startCircleCall,
+  togglePin,
   type CircleCall,
 } from "@/lib/study-circles";
 import { EmojiPicker } from "./EmojiPicker";
 import { InviteDialog } from "./InviteDialog";
+import { JoinCircleDialog } from "./JoinCircleDialog";
 import { CallRoom } from "./CallRoom";
+import { MessageThreadPanel } from "./MessageThreadPanel";
 
 type CircleMember = {
   user_id: string;
@@ -57,13 +59,13 @@ export function StudyCirclesClient({
   userId,
   displayName,
   planId,
-  callsAllowed,
+  aiCallsAllowed,
 }: {
   initialCircles: StudyCircle[];
   userId: string;
   displayName: string;
   planId: PlanId;
-  callsAllowed: boolean;
+  aiCallsAllowed: boolean;
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -74,6 +76,7 @@ export function StudyCirclesClient({
   const [newMessage, setNewMessage] = useState("");
   const [replyTo, setReplyTo] = useState<CircleMessage | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [name, setName] = useState("");
@@ -81,6 +84,9 @@ export function StudyCirclesClient({
   const [description, setDescription] = useState("");
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [activeCall, setActiveCall] = useState<CircleCall | null>(null);
+  const [activeCallSummary, setActiveCallSummary] = useState<CircleCall | null>(null);
+  const [liveCallsByCircle, setLiveCallsByCircle] = useState<Record<string, CircleCall>>({});
+  const [threadMessage, setThreadMessage] = useState<CircleMessage | null>(null);
   const [callBusy, setCallBusy] = useState(false);
   const [callError, setCallError] = useState<string | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
@@ -106,15 +112,28 @@ export function StudyCirclesClient({
       }
 
       const userIds = [...new Set(data.map((m) => m.user_id))];
-      const { data: profiles } = await supabase
-        .from("companion_profiles")
-        .select("id, display_name")
-        .in("id", userIds);
+      const messageIds = data.map((m) => m.id);
+      const [{ data: profiles }, { data: commentRows }] = await Promise.all([
+        supabase.from("companion_profiles").select("id, display_name").in("id", userIds),
+        messageIds.length > 0
+          ? supabase
+              .from("companion_circle_message_comments")
+              .select("parent_message_id")
+              .eq("circle_id", circleId)
+              .in("parent_message_id", messageIds)
+          : Promise.resolve({ data: [] as { parent_message_id: string }[] }),
+      ]);
       const profileMap = new Map(profiles?.map((p) => [p.id, p.display_name]) ?? []);
+      const commentCounts = new Map<string, number>();
+      for (const row of commentRows ?? []) {
+        const key = row.parent_message_id;
+        commentCounts.set(key, (commentCounts.get(key) ?? 0) + 1);
+      }
 
       setMessages(
         (data as CircleMessage[]).map((msg) => ({
           ...msg,
+          comment_count: commentCounts.get(msg.id) ?? 0,
           profile: { display_name: profileMap.get(msg.user_id) ?? null },
         }))
       );
@@ -192,6 +211,73 @@ export function StudyCirclesClient({
     setCircles(merged);
   }, [supabase, userId]);
 
+  const syncLiveCalls = useCallback(async () => {
+    const callIds = circles
+      .map((circle) => circle.active_call_id)
+      .filter((id): id is string => Boolean(id));
+    if (callIds.length === 0) {
+      setLiveCallsByCircle({});
+      return;
+    }
+    const { data } = await supabase
+      .from("companion_circle_calls")
+      .select("*")
+      .in("id", callIds)
+      .is("ended_at", null);
+    const next: Record<string, CircleCall> = {};
+    for (const call of (data ?? []) as CircleCall[]) {
+      next[call.circle_id] = call;
+    }
+    setLiveCallsByCircle(next);
+  }, [circles, supabase]);
+
+  useEffect(() => {
+    void syncLiveCalls();
+  }, [syncLiveCalls]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`user-circles-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "companion_study_circles" },
+        (payload) => {
+          const row = payload.new as StudyCircle;
+          setCircles((prev) =>
+            prev.some((circle) => circle.id === row.id)
+              ? prev.map((circle) => (circle.id === row.id ? { ...circle, ...row } : circle))
+              : prev
+          );
+          setActiveCircle((prev) => (prev?.id === row.id ? { ...prev, ...row } : prev));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "companion_circle_calls" },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as CircleCall | undefined;
+          if (!row?.circle_id) return;
+          if (!circles.some((circle) => circle.id === row.circle_id)) return;
+          if (row.ended_at) {
+            setLiveCallsByCircle((prev) => {
+              const next = { ...prev };
+              delete next[row.circle_id];
+              return next;
+            });
+            if (activeCircle?.active_call_id === row.id) setActiveCallSummary(null);
+            return;
+          }
+          setLiveCallsByCircle((prev) => ({ ...prev, [row.circle_id]: row }));
+          if (activeCircle?.id === row.circle_id) setActiveCallSummary(row);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [activeCircle?.active_call_id, activeCircle?.id, circles, supabase, userId]);
+
   useEffect(() => {
     if (!activeCircleId) return;
     void loadMessages(activeCircleId);
@@ -242,8 +328,31 @@ export function StudyCirclesClient({
           setMessages((prev) =>
             prev.map((m) =>
               m.id === row.id
-                ? { ...m, reactions: (row.reactions as Record<string, string[]>) ?? {} }
+                ? {
+                    ...m,
+                    ...row,
+                    reactions: (row.reactions as Record<string, string[]>) ?? {},
+                  }
                 : m
+            )
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "companion_circle_message_comments",
+          filter: `circle_id=eq.${activeCircleId}`,
+        },
+        (payload) => {
+          const row = payload.new as { parent_message_id: string };
+          setMessages((prev) =>
+            prev.map((message) =>
+              message.id === row.parent_message_id
+                ? { ...message, comment_count: (message.comment_count ?? 0) + 1 }
+                : message
             )
           );
         }
@@ -271,6 +380,27 @@ export function StudyCirclesClient({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  useEffect(() => {
+    if (!activeCircle?.active_call_id) {
+      setActiveCallSummary(null);
+      return;
+    }
+    const cached = liveCallsByCircle[activeCircle.id];
+    if (cached && !cached.ended_at) {
+      setActiveCallSummary(cached);
+      return;
+    }
+    const loadActiveCall = async () => {
+      const { data } = await supabase
+        .from("companion_circle_calls")
+        .select("*")
+        .eq("id", activeCircle.active_call_id)
+        .maybeSingle();
+      setActiveCallSummary((data as CircleCall | null) ?? null);
+    };
+    void loadActiveCall();
+  }, [activeCircle?.active_call_id, activeCircle?.id, liveCallsByCircle, supabase]);
 
   useEffect(() => {
     const initial = searchParams.get("circle");
@@ -398,6 +528,14 @@ export function StudyCirclesClient({
     }
   };
 
+  const handleTogglePin = async (msgId: string) => {
+    try {
+      await togglePin(supabase, msgId);
+    } catch (e) {
+      console.error("[pin]", e);
+    }
+  };
+
   const quickCopyInvite = async () => {
     if (!activeCircle) return;
     try {
@@ -416,18 +554,22 @@ export function StudyCirclesClient({
     setCallError(null);
     setCallBusy(true);
     try {
-      const res = await fetch("/api/study-circles/call-check", {
+      const res = await fetch("/api/study-circles/start-call", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ circleId: activeCircle.id }),
+        body: JSON.stringify({ circleId: activeCircle.id, mode }),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         setCallError(data.error ?? "Cannot start call");
         return;
       }
-      const call = await startCircleCall(supabase, activeCircle.id, mode);
-      setActiveCall(call);
+      const data = (await res.json()) as {
+        call: CircleCall;
+        notifiedMembers?: number;
+        emailedMembers?: number;
+      };
+      setActiveCall(data.call);
       void refreshCircle(activeCircle.id);
     } catch (e) {
       setCallError(e instanceof Error ? e.message : "Failed to start call");
@@ -438,8 +580,8 @@ export function StudyCirclesClient({
 
   const joinExistingCall = async () => {
     if (!activeCircle?.active_call_id) return;
-    if (!callsAllowed) {
-      setCallError("Group calls require a Graduate or Campus plan. Upgrade in Profile → Plans.");
+    if (activeCallSummary && !activeCallSummary.ended_at) {
+      setActiveCall(activeCallSummary);
       return;
     }
     const { data } = await supabase
@@ -452,17 +594,84 @@ export function StudyCirclesClient({
     }
   };
 
+  const pinnedMessages = messages
+    .filter((message) => Boolean(message.pinned_at))
+    .sort((a, b) => new Date(b.pinned_at ?? 0).getTime() - new Date(a.pinned_at ?? 0).getTime());
+
+  const pendingLiveCalls = circles
+    .map((circle) => ({ circle, call: liveCallsByCircle[circle.id] }))
+    .filter((entry): entry is { circle: StudyCircle; call: CircleCall } =>
+      Boolean(entry.call && !entry.call.ended_at)
+    )
+    .filter((entry) => entry.circle.id !== activeCircle?.id);
+
   return (
     <div className="page-enter space-y-6">
       <PageHeader
         title="Study Circles"
         description="Live chats, emoji reactions, audio & video calls, and Regal AI on demand for your study group."
         action={
-          <Button onClick={() => setShowCreate((v) => !v)}>
-            <Plus className="w-4 h-4" /> New Circle
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setShowJoin(true)}>
+              <UserPlus className="w-4 h-4" /> Join Circle
+            </Button>
+            <Button onClick={() => setShowCreate((v) => !v)}>
+              <Plus className="w-4 h-4" /> New Circle
+            </Button>
+          </div>
         }
       />
+
+      {pendingLiveCalls.length > 0 && (
+        <div className="space-y-2">
+          {pendingLiveCalls.map(({ circle, call }) => (
+            <Card key={call.id} className="border-emerald-400/20 bg-emerald-500/10">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-widest text-emerald-300 font-semibold">
+                    Live study call
+                  </p>
+                  <p className="text-sm text-white mt-1">
+                    {circle.name} has a live {call.mode} call in progress.
+                  </p>
+                </div>
+                <Button
+                  className="shrink-0"
+                  onClick={() => {
+                    setActiveCircle(circle);
+                    setMobileTab("chat");
+                    router.replace(`/study-circles?circle=${circle.id}`);
+                    if (!call.ended_at) setActiveCall(call);
+                  }}
+                >
+                  <Phone className="w-4 h-4" /> Join call
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {activeCircle && activeCircle.active_call_id && activeCallSummary && !activeCall && !activeCallSummary.ended_at && (
+        <Card className="border-emerald-400/20 bg-emerald-500/10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-widest text-emerald-300 font-semibold">
+                Ongoing study call
+              </p>
+              <p className="text-sm text-white mt-1">
+                {activeCircle.name} has a live {activeCallSummary.mode} call in progress. Join now.
+              </p>
+              <p className="text-[11px] text-emerald-100/70 mt-1">
+                Started {new Date(activeCallSummary.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
+            <Button className="shrink-0" onClick={() => void joinExistingCall()}>
+              <Phone className="w-4 h-4" /> Join live call
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {showCreate && (
         <Card>
@@ -615,18 +824,18 @@ export function StudyCirclesClient({
                     variant="secondary"
                     onClick={() => void startCall("audio")}
                     disabled={callBusy}
-                    title={callsAllowed ? "Start audio call" : "Audio calls require a paid plan"}
+                    title="Start audio call"
                   >
-                    {callsAllowed ? <Phone className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                    <Phone className="w-3.5 h-3.5" />
                   </Button>
                   <Button
                     size="sm"
                     variant="secondary"
                     onClick={() => void startCall("video")}
                     disabled={callBusy}
-                    title={callsAllowed ? "Start video call" : "Video calls require a paid plan"}
+                    title="Start video call"
                   >
-                    {callsAllowed ? <Video className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                    <Video className="w-3.5 h-3.5" />
                   </Button>
                   <Button
                     size="sm"
@@ -666,6 +875,30 @@ export function StudyCirclesClient({
               )}
 
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {pinnedMessages.length > 0 && (
+                  <div className="space-y-2">
+                    {pinnedMessages.slice(0, 3).map((msg) => (
+                      <div
+                        key={`pinned-${msg.id}`}
+                        className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] uppercase tracking-widest text-amber-200 font-semibold flex items-center gap-1">
+                            <Pin className="w-3 h-3" /> Pinned
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => void handleTogglePin(msg.id)}
+                            className="text-[10px] text-amber-100/70 hover:text-white"
+                          >
+                            Unpin
+                          </button>
+                        </div>
+                        <p className="text-sm text-white/90 mt-1 break-words">{msg.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {messages.length === 0 && (
                   <div className="text-center py-12 text-muted text-sm">
                     <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-40" />
@@ -680,6 +913,8 @@ export function StudyCirclesClient({
                     isOwn={msg.user_id === userId && !msg.is_ai}
                     onReact={(emoji) => void handleReaction(msg.id, emoji)}
                     onReply={() => setReplyTo(msg)}
+                    onPin={() => void handleTogglePin(msg.id)}
+                    onOpenThread={() => setThreadMessage(msg)}
                     referenced={
                       msg.reply_to
                         ? messages.find((m) => m.id === msg.reply_to) ?? null
@@ -807,13 +1042,35 @@ export function StudyCirclesClient({
               </Button>
               <p className="text-[10px] text-muted leading-relaxed text-center">
                 {planId === "scholar"
-                  ? "Chat is free forever. Audio & video calls unlock on Graduate."
-                  : "You have unlimited audio & video calls."}
+                  ? "Chat and calls are available now. Regal AI inside live calls unlocks on Graduate."
+                  : "You have live calls plus Regal AI support inside calls."}
               </p>
             </div>
           )}
         </Card>
       </div>
+
+      {showJoin && (
+        <JoinCircleDialog
+          onClose={() => setShowJoin(false)}
+          onJoined={async (circleId) => {
+            setShowJoin(false);
+            await refreshCircles();
+            const { data } = await supabase
+              .from("companion_study_circles")
+              .select(
+                "id, name, description, subject, owner_id, is_public, created_at, active_call_id, calls_enabled, avatar_url, topic_tags"
+              )
+              .eq("id", circleId)
+              .maybeSingle();
+            if (data) {
+              setActiveCircle(data as StudyCircle);
+              setMobileTab("chat");
+              router.replace(`/study-circles?circle=${circleId}`);
+            }
+          }}
+        />
+      )}
 
       {showInvite && activeCircle && (
         <InviteDialog
@@ -830,12 +1087,22 @@ export function StudyCirclesClient({
           userId={userId}
           displayName={displayName}
           isHost={activeCall.started_by === userId}
+          aiCallsAllowed={aiCallsAllowed}
           aiBusy={aiBusy}
           onAskAI={(prompt) => triggerAI(prompt, { inCall: true })}
           onClose={() => {
             setActiveCall(null);
             if (activeCircleId) void refreshCircle(activeCircleId);
           }}
+        />
+      )}
+
+      {threadMessage && activeCircleId && (
+        <MessageThreadPanel
+          message={threadMessage}
+          circleId={activeCircleId}
+          userId={userId}
+          onClose={() => setThreadMessage(null)}
         />
       )}
     </div>
@@ -847,6 +1114,8 @@ function MessageBubble({
   isOwn,
   onReact,
   onReply,
+  onPin,
+  onOpenThread,
   referenced,
   userId,
 }: {
@@ -854,6 +1123,8 @@ function MessageBubble({
   isOwn: boolean;
   onReact: (emoji: string) => void;
   onReply: () => void;
+  onPin: () => void;
+  onOpenThread: () => void;
   referenced: CircleMessage | null;
   userId: string;
 }) {
@@ -972,6 +1243,29 @@ function MessageBubble({
                 aria-label="Reply"
               >
                 <Reply className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={onOpenThread}
+                className="text-white/70 hover:text-white text-[10px] px-1 flex items-center gap-0.5"
+              >
+                Thread
+                {(msg.comment_count ?? 0) > 0 && (
+                  <span className="text-[9px] bg-white/15 rounded-full px-1 min-w-4 text-center">
+                    {msg.comment_count}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={onPin}
+                className={cn(
+                  "w-6 h-6 flex items-center justify-center",
+                  msg.pinned_at ? "text-amber-200" : "text-white/70 hover:text-white"
+                )}
+                aria-label={msg.pinned_at ? "Unpin" : "Pin"}
+              >
+                <Pin className="w-3 h-3" />
               </button>
             </div>
           )}

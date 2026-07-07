@@ -68,7 +68,33 @@ export interface CircleMessage {
   reply_to?: string | null;
   reactions?: Record<string, string[]>;
   metadata?: Record<string, unknown>;
+  pinned_at?: string | null;
+  pinned_by?: string | null;
+  comment_count?: number;
   profile?: { display_name: string | null; email?: string };
+}
+
+export interface CircleMessageComment {
+  id: string;
+  circle_id: string;
+  parent_message_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  profile?: { display_name: string | null; email?: string };
+}
+
+export interface CompanionNotification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  body: string;
+  href?: string | null;
+  metadata?: Record<string, unknown>;
+  read_at?: string | null;
+  created_at: string;
 }
 
 export interface Assignment {

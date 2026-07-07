@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { MobilePageTitle } from "@/components/layout/MobilePageTitle";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import type { CompanionProfile } from "@/types";
 
 const ICONS = {
@@ -152,6 +153,12 @@ export function AppShell({
         Activity Log
       </Link>
 
+      {profile?.id && (
+        <div className="mb-4 px-2">
+          <NotificationBell userId={profile.id} />
+        </div>
+      )}
+
       <nav className="flex-1 space-y-5 overflow-y-auto pr-1">
         {NAV_SECTIONS.map((section) => (
           <div key={section.label}>
@@ -264,6 +271,7 @@ export function AppShell({
           <div className="min-w-0 flex-1">
             <MobilePageTitle />
           </div>
+          {profile?.id && <NotificationBell userId={profile.id} />}
         </header>
         <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-[max(2rem,env(safe-area-inset-bottom))] overflow-x-hidden">{children}</main>
       </div>

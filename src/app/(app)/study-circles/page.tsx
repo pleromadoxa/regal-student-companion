@@ -53,7 +53,7 @@ export default async function StudyCirclesPage() {
         userId={user.id}
         displayName={profile?.display_name ?? profile?.email ?? "You"}
         planId={subscription.planId}
-        callsAllowed={subscription.limits.studyCirclesUnlimited}
+        aiCallsAllowed={subscription.limits.liveVoiceTutor}
       />
     </Suspense>
   );

@@ -38,6 +38,24 @@ export function buildInviteUrl(code: string, origin?: string): string {
   return `${base}/study-circles/join/${code}`;
 }
 
+export function parseInviteCode(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return "";
+
+  try {
+    const url = new URL(trimmed);
+    const parts = url.pathname.split("/").filter(Boolean);
+    const joinIndex = parts.findIndex((part) => part === "join");
+    if (joinIndex >= 0 && parts[joinIndex + 1]) {
+      return parts[joinIndex + 1].toUpperCase();
+    }
+  } catch {
+    // Treat non-URL input as a direct invite code.
+  }
+
+  return trimmed.toUpperCase();
+}
+
 export async function createCircleInvite(
   supabase: SupabaseClient,
   circleId: string,
@@ -89,6 +107,21 @@ export async function toggleReaction(
   });
   if (error) throw new Error(error.message);
   return (data as Record<string, string[]>) ?? {};
+}
+
+export async function togglePin(
+  supabase: SupabaseClient,
+  messageId: string
+): Promise<{ pinnedAt: string | null; pinnedBy: string | null }> {
+  const { data, error } = await supabase.rpc("companion_toggle_message_pin", {
+    p_message_id: messageId,
+  });
+  if (error) throw new Error(error.message);
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    pinnedAt: (row?.pinned_at as string | null) ?? null,
+    pinnedBy: (row?.pinned_by as string | null) ?? null,
+  };
 }
 
 export async function startCircleCall(

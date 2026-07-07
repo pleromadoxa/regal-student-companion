@@ -33,6 +33,8 @@ async function testSchema(service: ReturnType<typeof createClient> | null) {
     "companion_circle_invites",
     "companion_circle_calls",
     "companion_circle_call_participants",
+    "companion_circle_message_comments",
+    "companion_notifications",
   ] as const;
 
   for (const table of tables) {
@@ -51,10 +53,10 @@ async function testSchema(service: ReturnType<typeof createClient> | null) {
 
   const { error: msgErr } = await service
     .from("companion_circle_messages")
-    .select("id, is_ai, reactions, reply_to, metadata")
+    .select("id, is_ai, reactions, reply_to, metadata, pinned_at, pinned_by")
     .limit(1);
   assert.ok(!msgErr, `New message columns missing: ${msgErr?.message}`);
-  console.log("✓ companion_circle_messages has AI/reactions/reply columns");
+  console.log("✓ companion_circle_messages has AI/reactions/reply/pin columns");
 }
 
 async function testRpcs(anon: ReturnType<typeof createClient>) {
@@ -68,6 +70,7 @@ async function testRpcs(anon: ReturnType<typeof createClient>) {
       name: "companion_create_circle_invite",
       args: { p_circle_id: "00000000-0000-0000-0000-000000000000", p_max_uses: null, p_ttl_hours: 24 },
     },
+    { name: "companion_toggle_message_pin", args: { p_message_id: "00000000-0000-0000-0000-000000000000" } },
     { name: "companion_toggle_message_reaction", args: { p_message_id: "00000000-0000-0000-0000-000000000000", p_emoji: "🔥" } },
     { name: "companion_end_circle_call", args: { p_call_id: "00000000-0000-0000-0000-000000000000" } },
   ];
@@ -79,6 +82,7 @@ async function testRpcs(anon: ReturnType<typeof createClient>) {
       error.message.includes("Not authenticated") ||
       error.message.includes("Only Regal Student Companion users") ||
       error.message.includes("Only members can create invites") ||
+      error.message.includes("Not a member of this circle") ||
       error.message.includes("Message not found") ||
       error.message.includes("Call not found");
     assert.ok(expected, `Unexpected error from RPC ${name}: ${error?.message}`);
@@ -93,6 +97,7 @@ async function testLiveRoutes(baseUrl: string) {
     "/study-circles/join/DOESNOTEXIST",
     "/api/study-circles/ai-message",
     "/api/study-circles/call-check",
+    "/api/study-circles/start-call",
   ];
   for (const path of paths) {
     const method = path.startsWith("/api/") ? "POST" : "GET";

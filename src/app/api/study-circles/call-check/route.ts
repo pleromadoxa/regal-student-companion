@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { checkFeatureAccess } from "@/lib/subscription";
 
 /**
- * Server-side check for a paid plan before starting a study circle call.
- * Frontend calls this before opening the WebRTC room.
+ * Server-side membership/capability check before opening a study circle call.
+ * Any circle member can join the call; paid plans unlock Regal AI inside the call.
  */
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -28,17 +28,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Not a member of this circle" }, { status: 403 });
   }
 
-  const gate = await checkFeatureAccess(supabase, user.id, "studyCirclesUnlimited");
-  if (!gate.ok) {
-    return NextResponse.json(
-      {
-        error:
-          "Group audio & video calls are a Graduate or Campus plan feature. Upgrade in Profile → Plans.",
-        upgradeRequired: true,
-      },
-      { status: 403 }
-    );
-  }
-
-  return NextResponse.json({ ok: true });
+  const aiGate = await checkFeatureAccess(supabase, user.id, "liveVoiceTutor");
+  return NextResponse.json({ ok: true, aiInCallAllowed: aiGate.ok });
 }

@@ -31,6 +31,7 @@ const ICE_SERVERS: RTCConfiguration = {
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun.cloudflare.com:3478" },
   ],
+  iceCandidatePoolSize: 10,
 };
 
 type PeerState = {
@@ -66,6 +67,7 @@ export function CallRoom({
   userId,
   displayName,
   isHost,
+  aiCallsAllowed,
   onClose,
   onAskAI,
   aiBusy,
@@ -75,6 +77,7 @@ export function CallRoom({
   userId: string;
   displayName: string;
   isHost: boolean;
+  aiCallsAllowed: boolean;
   onClose: () => void;
   onAskAI: (prompt: string) => Promise<void>;
   aiBusy: boolean;
@@ -91,6 +94,8 @@ export function CallRoom({
   const [showAI, setShowAI] = useState(false);
 
   const peersRef = useRef<Record<string, PeerState>>({});
+  const pendingIceRef = useRef<Record<string, RTCIceCandidateInit[]>>({});
+  const iceRestartedRef = useRef<Record<string, boolean>>({});
   const localStreamRef = useRef<MediaStream | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
@@ -104,6 +109,50 @@ export function CallRoom({
     channelRef.current?.send({ type: "broadcast", event: "signal", payload: msg });
   }, []);
 
+  const flushPendingIce = useCallback(async (peerId: string, pc: RTCPeerConnection) => {
+    const pending = pendingIceRef.current[peerId] ?? [];
+    pendingIceRef.current[peerId] = [];
+    for (const candidate of pending) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.warn("[call] flush ice failed", e);
+      }
+    }
+  }, []);
+
+  const addRemoteIce = useCallback(
+    async (peerId: string, pc: RTCPeerConnection, candidate: RTCIceCandidateInit) => {
+      if (pc.remoteDescription) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (e) {
+          console.warn("[call] ice add failed", e);
+        }
+        return;
+      }
+      pendingIceRef.current[peerId] = [...(pendingIceRef.current[peerId] ?? []), candidate];
+    },
+    []
+  );
+
+  const restartIceForPeer = useCallback(
+    (peerId: string, pc: RTCPeerConnection) => {
+      if (iceRestartedRef.current[peerId]) return;
+      iceRestartedRef.current[peerId] = true;
+      void (async () => {
+        try {
+          const offer = await pc.createOffer({ iceRestart: true });
+          await pc.setLocalDescription(offer);
+          sendSignal({ type: "offer", from: userId, to: peerId, sdp: offer, displayName });
+        } catch (e) {
+          console.warn("[call] ice restart failed", e);
+        }
+      })();
+    },
+    [displayName, sendSignal, userId]
+  );
+
   const upsertPeer = useCallback(
     (id: string, updater: (prev: PeerState | undefined) => PeerState) => {
       setPeers((prev) => ({ ...prev, [id]: updater(prev[id]) }));
@@ -112,6 +161,8 @@ export function CallRoom({
   );
 
   const removePeer = useCallback((id: string) => {
+    delete pendingIceRef.current[id];
+    delete iceRestartedRef.current[id];
     setPeers((prev) => {
       const next = { ...prev };
       next[id]?.pc.close();
@@ -122,6 +173,11 @@ export function CallRoom({
 
   const createPeerConnection = useCallback(
     (peerId: string, initiator: boolean) => {
+      const existing = peersRef.current[peerId]?.pc;
+      if (existing && existing.signalingState !== "closed") {
+        return existing;
+      }
+
       const pc = new RTCPeerConnection(ICE_SERVERS);
       const remoteStream = new MediaStream();
 
@@ -152,8 +208,13 @@ export function CallRoom({
       };
 
       pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "failed") {
+          restartIceForPeer(peerId, pc);
+        }
         if (["disconnected", "failed", "closed"].includes(pc.connectionState)) {
-          removePeer(peerId);
+          if (pc.connectionState !== "failed") {
+            removePeer(peerId);
+          }
         }
       };
 
@@ -175,7 +236,7 @@ export function CallRoom({
 
       return pc;
     },
-    [displayName, removePeer, sendSignal, upsertPeer, userId]
+    [displayName, removePeer, restartIceForPeer, sendSignal, upsertPeer, userId]
   );
 
   const bootstrap = useCallback(async () => {
@@ -213,20 +274,19 @@ export function CallRoom({
           if (userId < msg.from) {
             createPeerConnection(msg.from, true);
           }
-          upsertPeer(msg.from, (prev) => ({
-            ...(prev ?? {
-              pc: new RTCPeerConnection(ICE_SERVERS),
-              stream: new MediaStream(),
-              cameraOn: false,
-              micOn: false,
-            }),
-            displayName: msg.displayName ?? prev?.displayName ?? "Student",
-          }));
+          const existingPeer = peersRef.current[msg.from];
+          if (existingPeer) {
+            upsertPeer(msg.from, (prev) => ({
+              ...(prev ?? existingPeer),
+              displayName: msg.displayName ?? prev?.displayName ?? existingPeer.displayName,
+            }));
+          }
           break;
         }
         case "offer": {
           const pc = createPeerConnection(msg.from, false);
           await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp!));
+          await flushPendingIce(msg.from, pc);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           sendSignal({ type: "answer", from: userId, to: msg.from, sdp: answer, displayName });
@@ -240,6 +300,7 @@ export function CallRoom({
           const peer = peersRef.current[msg.from];
           if (peer && msg.sdp) {
             await peer.pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+            await flushPendingIce(msg.from, peer.pc);
             upsertPeer(msg.from, (prev) => ({
               ...(prev ?? peer),
               displayName: msg.displayName ?? prev?.displayName ?? peer.displayName,
@@ -250,24 +311,20 @@ export function CallRoom({
         case "ice": {
           const peer = peersRef.current[msg.from];
           if (peer && msg.candidate) {
-            try {
-              await peer.pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
-            } catch (e) {
-              console.warn("[call] ice add failed", e);
-            }
+            await addRemoteIce(msg.from, peer.pc, msg.candidate);
           }
           break;
         }
         case "media": {
-          upsertPeer(msg.from, (prev) => ({
-            ...(prev ?? {
-              pc: new RTCPeerConnection(ICE_SERVERS),
-              stream: new MediaStream(),
-              displayName: msg.displayName ?? "Student",
-            }),
-            cameraOn: msg.media?.camera ?? false,
-            micOn: msg.media?.mic ?? false,
-          }));
+          const existingPeer = peersRef.current[msg.from];
+          if (existingPeer) {
+            upsertPeer(msg.from, (prev) => ({
+              ...(prev ?? existingPeer),
+              displayName: msg.displayName ?? prev?.displayName ?? existingPeer.displayName,
+              cameraOn: msg.media?.camera ?? false,
+              micOn: msg.media?.mic ?? false,
+            }));
+          }
           break;
         }
         case "goodbye": {
@@ -437,7 +494,7 @@ export function CallRoom({
 
   const submitAI = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!aiPrompt.trim()) return;
+    if (!aiPrompt.trim() || !aiCallsAllowed) return;
     const p = aiPrompt.trim();
     setAiPrompt("");
     setShowAI(false);
@@ -505,15 +562,22 @@ export function CallRoom({
                 autoFocus
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="Ask Regal AI to help the group…"
+                placeholder={
+                  aiCallsAllowed
+                    ? "Ask Regal AI to help the group…"
+                    : "Upgrade to Graduate or Campus for live-call Regal AI"
+                }
                 className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-muted"
+                disabled={!aiCallsAllowed}
               />
-              <Button type="submit" size="sm" disabled={aiBusy || !aiPrompt.trim()}>
+              <Button type="submit" size="sm" disabled={aiBusy || !aiPrompt.trim() || !aiCallsAllowed}>
                 {aiBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Ask"}
               </Button>
             </div>
             <p className="text-[10px] text-muted mt-1 pl-6">
-              Regal AI’s response appears in the circle chat so everyone can see it.
+              {aiCallsAllowed
+                ? "Regal AI’s response appears in the circle chat so everyone can see it."
+                : "Live-call Regal AI is a paid upgrade. Standard study circle chat AI still works outside the call."}
             </p>
           </form>
         )}
@@ -561,7 +625,17 @@ export function CallRoom({
           )}
           <button
             onClick={() => setShowAI((v) => !v)}
-            className="h-11 px-4 rounded-full flex items-center gap-2 border border-regal-purple-400/30 bg-regal-purple-500/20 text-white hover:bg-regal-purple-500/30 transition-colors"
+            className={cn(
+              "h-11 px-4 rounded-full flex items-center gap-2 border transition-colors",
+              aiCallsAllowed
+                ? "border-regal-purple-400/30 bg-regal-purple-500/20 text-white hover:bg-regal-purple-500/30"
+                : "border-amber-400/25 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15"
+            )}
+            title={
+              aiCallsAllowed
+                ? "Bring Regal AI into this live study call"
+                : "Upgrade to Graduate or Campus to use Regal AI inside live calls"
+            }
           >
             <Sparkles className="w-4 h-4" />
             <span className="text-sm font-medium hidden sm:inline">Regal AI</span>

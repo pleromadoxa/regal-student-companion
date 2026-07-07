@@ -4,7 +4,7 @@ import { runRegalAI } from "@/lib/regal-ai-router";
 import { regalSystemInstruction } from "@/lib/regal-ai-system";
 import { sanitizeAIContent } from "@/lib/format-ai-content";
 import { clientIp, rateLimitMemory } from "@/lib/security";
-import { checkAiUsage, incrementAiUsage } from "@/lib/subscription";
+import { checkAiUsage, checkFeatureAccess, incrementAiUsage } from "@/lib/subscription";
 
 type Body = {
   circleId?: string;
@@ -40,6 +40,19 @@ export async function POST(request: NextRequest) {
 
     if (!membership) {
       return NextResponse.json({ error: "Not a member of this circle" }, { status: 403 });
+    }
+
+    if (body.inCall) {
+      const gate = await checkFeatureAccess(supabase, user.id, "liveVoiceTutor");
+      if (!gate.ok) {
+        return NextResponse.json(
+          {
+            error: "Regal AI inside live study calls requires a Graduate or Campus plan.",
+            upgradeRequired: true,
+          },
+          { status: 403 }
+        );
+      }
     }
 
     const usage = await checkAiUsage(supabase, user.id);

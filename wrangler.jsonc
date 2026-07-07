@@ -14,6 +14,12 @@
       "service": "regal-companion"
     }
   ],
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "remote": true
+    }
+  ],
   "r2_buckets": [
     {
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
@@ -38,6 +44,7 @@
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhleG53Y21xbmVsZ3p1cWhrdnR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3ODY2MzMsImV4cCI6MjA5NDM2MjYzM30.h4zQHIbJXZdPJcjn9qkA9SOUuPGPYuQSeQUnnJni890",
     "NEXT_PUBLIC_SITE_URL": "https://regalcompanion.cloud",
     "REGAL_DOMAIN": "regalcompanion.cloud",
+    "EMAIL_FROM_ADDRESS": "notifications@regalcompanion.cloud",
     "CLOUDFLARE_AI_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
   }
 }
