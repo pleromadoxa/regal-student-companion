@@ -6,6 +6,44 @@ import { getAuthUser, getCompanionProfile } from "@/lib/supabase/auth-server";
 import { isCompanionAdmin } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/server";
 import { syncRegalProfileAvatar } from "@/lib/profile-avatar";
+import type { CompanionProfile } from "@/types";
+
+async function safeGetProfile(userId: string): Promise<CompanionProfile | null> {
+  try {
+    return await getCompanionProfile(userId);
+  } catch (e) {
+    console.error("[layout] getCompanionProfile failed:", e);
+    return null;
+  }
+}
+
+async function safeUpsertProfile(userId: string, email: string, meta: Record<string, unknown>): Promise<void> {
+  try {
+    const supabase = await createClient();
+    const { error: upsertError } = await supabase.from("companion_profiles").upsert({
+      id: userId,
+      email,
+      display_name:
+        (meta.full_name as string) ??
+        email.split("@")[0] ??
+        "Student",
+    });
+    if (upsertError) {
+      console.error("[layout] profile upsert failed:", upsertError.message);
+    }
+  } catch (e) {
+    console.error("[layout] profile upsert threw:", e);
+  }
+}
+
+async function safeIsAdmin(user: { id: string; email?: string | null }): Promise<boolean> {
+  try {
+    return await isCompanionAdmin(user as never);
+  } catch (e) {
+    console.error("[layout] isCompanionAdmin failed:", e);
+    return false;
+  }
+}
 
 export default async function AppLayout({
   children,
@@ -15,27 +53,16 @@ export default async function AppLayout({
   const user = await getAuthUser();
   if (!user) redirect("/login");
 
-  let profile = await getCompanionProfile(user.id);
+  let profile = await safeGetProfile(user.id);
 
   if (!profile) {
-    const supabase = await createClient();
-    const { error: upsertError } = await supabase.from("companion_profiles").upsert({
-      id: user.id,
-      email: user.email ?? "",
-      display_name:
-        user.user_metadata?.full_name ??
-        user.email?.split("@")[0] ??
-        "Student",
-    });
-    if (upsertError) {
-      console.error("[layout] profile upsert failed:", upsertError.message);
-    }
-    profile = await getCompanionProfile(user.id);
+    await safeUpsertProfile(user.id, user.email ?? "", user.user_metadata ?? {});
+    profile = await safeGetProfile(user.id);
   }
 
-  const isAdmin = await isCompanionAdmin(user);
+  const isAdmin = await safeIsAdmin(user);
 
-  // Best-effort avatar sync (runs inline; safe for Cloudflare Workers)
+  // Best-effort avatar sync (safe for Cloudflare Workers)
   try {
     const supabase = await createClient();
     await syncRegalProfileAvatar(supabase, user);
