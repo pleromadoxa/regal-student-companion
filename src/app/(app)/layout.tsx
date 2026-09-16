@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { after } from "next/server";
 import { AppShell } from "@/components/layout/AppShell";
 import { ActivityTracker } from "@/components/activity/ActivityTracker";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -15,16 +14,6 @@ export default async function AppLayout({
 }) {
   const user = await getAuthUser();
   if (!user) redirect("/login");
-
-  // Non-blocking: sync avatar after the shell starts streaming (Next.js after())
-  after(async () => {
-    try {
-      const supabase = await createClient();
-      await syncRegalProfileAvatar(supabase, user);
-    } catch {
-      /* avatar sync is best-effort */
-    }
-  });
 
   let profile = await getCompanionProfile(user.id);
 
@@ -45,6 +34,14 @@ export default async function AppLayout({
   }
 
   const isAdmin = await isCompanionAdmin(user);
+
+  // Best-effort avatar sync (runs inline; safe for Cloudflare Workers)
+  try {
+    const supabase = await createClient();
+    await syncRegalProfileAvatar(supabase, user);
+  } catch {
+    /* avatar sync is best-effort */
+  }
 
   return (
     <ToastProvider>
