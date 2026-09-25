@@ -39,7 +39,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#08040f",
+  themeColor: "#06050b",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
@@ -55,7 +55,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full overflow-x-hidden safe-area-body">{children}</body>
+      <body className="min-h-full overflow-x-hidden safe-area-body">
+        {children}
+      </body>
     </html>
   );
 }

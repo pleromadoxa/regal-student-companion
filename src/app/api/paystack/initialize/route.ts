@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { PLANS, type PlanId } from "@/lib/plans";
+import { isPlanId, planRank, PLANS, type PlanId } from "@/lib/plans";
 import { initializeTransaction, isPaystackConfigured } from "@/lib/paystack";
+import { getUserSubscription } from "@/lib/subscription";
 import { USER_FACING } from "@/lib/branding";
 import { SITE } from "@/lib/site";
 import { clientIp, rateLimitMemory } from "@/lib/security";
@@ -29,8 +30,23 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json().catch(() => null)) as { planId?: PlanId } | null;
     const planId = body?.planId;
-    if (!planId || !PLANS[planId] || planId === "scholar") {
+    if (!isPlanId(planId) || planId === "scholar") {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    }
+
+    // Hybrid entitlements: never charge for a tier the account already has
+    // through Regal One or an active student plan.
+    const subscription = await getUserSubscription(supabase, user.id);
+    if (planRank(subscription.planId) >= planRank(planId)) {
+      return NextResponse.json(
+        {
+          error: subscription.viaRegalOne
+            ? `Already included with your ${subscription.regalTierName} plan.`
+            : "You already have this plan.",
+          alreadyEntitled: true,
+        },
+        { status: 409 }
+      );
     }
 
     const plan = PLANS[planId];
@@ -49,17 +65,26 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const { error: upsertError } = await supabase.from("companion_subscriptions").upsert(
-      {
-        user_id: user.id,
-        plan_id: planId,
-        status: "trialing",
-        paystack_reference: reference,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
-    if (upsertError) console.error("[paystack/initialize] upsert:", upsertError.message);
+    // Store the payment reference only — plan_id/status are privileged columns
+    // (activated later by Paystack verify/webhook with the service role).
+    const nowIso = new Date().toISOString();
+    const { data: existingRow } = await supabase
+      .from("companion_subscriptions")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const refWrite = existingRow
+      ? await supabase
+          .from("companion_subscriptions")
+          .update({ paystack_reference: reference, updated_at: nowIso })
+          .eq("user_id", user.id)
+      : await supabase
+          .from("companion_subscriptions")
+          .insert({ user_id: user.id, paystack_reference: reference, updated_at: nowIso });
+    if (refWrite.error) {
+      console.error("[paystack/initialize] reference write:", refWrite.error.message);
+    }
 
     return NextResponse.json({
       authorization_url: data.authorization_url,

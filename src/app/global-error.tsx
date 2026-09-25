@@ -18,13 +18,13 @@ export default function GlobalError({
 
   return (
     <html lang="en">
-      <body className="min-h-screen flex items-center justify-center bg-[#08040f] text-white p-6">
+      <body className="min-h-screen flex items-center justify-center bg-[#06050b] text-white p-6">
         <div className="max-w-md w-full glass-panel rounded-2xl p-8 text-center space-y-4">
           <div className="mx-auto w-12 h-12 rounded-full bg-red-500/15 flex items-center justify-center">
             <AlertTriangle className="w-6 h-6 text-red-300" />
           </div>
-          <h1 className="text-xl font-bold">Something went wrong</h1>
-          <p className="text-sm text-muted leading-relaxed">
+          <h1 className="text-xl font-bold tracking-tight">Something went wrong</h1>
+          <p className="text-[13px] text-muted leading-relaxed">
             Regal Student Companion hit an unexpected error. Your data is safe — try refreshing
             or return to the dashboard.
           </p>

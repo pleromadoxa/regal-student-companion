@@ -1,16 +1,24 @@
 import { Flame } from "lucide-react";
 import { getAuthUser, getCompanionProfile } from "@/lib/supabase/auth-server";
-import { getDashboardStats } from "@/lib/dashboard-data";
+import { getDashboardStats, type DashboardStats } from "@/lib/dashboard-data";
 import { StatCard } from "@/components/ui/PageHeader";
 import { CheckSquare, Calendar, Timer, Grid3x3 } from "lucide-react";
 import { STUDENT_TOOLS } from "@/lib/student-tools";
 
 export async function DashboardHeader({ userId }: { userId: string }) {
-  const [profile, stats, user] = await Promise.all([
-    getCompanionProfile(userId),
-    getDashboardStats(userId),
-    getAuthUser(),
-  ]);
+  let profile: Awaited<ReturnType<typeof getCompanionProfile>> = null;
+  let stats: DashboardStats = { pendingTasks: [], upcomingEvents: [], focusCount: 0 };
+  let user: Awaited<ReturnType<typeof getAuthUser>> = null;
+
+  try {
+    [profile, stats, user] = await Promise.all([
+      getCompanionProfile(userId),
+      getDashboardStats(userId),
+      getAuthUser(),
+    ]);
+  } catch (e) {
+    console.error("[DashboardHeader] data fetch failed:", e);
+  }
 
   const displayName =
     profile?.display_name ?? user?.email?.split("@")[0] ?? "Student";
@@ -18,17 +26,17 @@ export async function DashboardHeader({ userId }: { userId: string }) {
   return (
     <>
       <div>
-        <p className="text-muted text-sm mb-1">Welcome back,</p>
+        <p className="text-muted text-[13px] mb-1">Welcome back,</p>
         <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
           {displayName}
         </h1>
-        <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted">
+        <div className="flex flex-wrap items-center gap-3 mt-2 text-[13px] text-muted">
           <span>{profile?.engagement_points ?? 0} engagement pts</span>
-          <span className="text-white/20">·</span>
+          <span className="text-white/15">·</span>
           <span>{profile?.focus_minutes ?? 0} focus min</span>
           {(profile?.study_streak ?? 0) > 0 && (
             <>
-              <span className="text-white/20">·</span>
+              <span className="text-white/15">·</span>
               <span className="flex items-center gap-1 text-orange-300">
                 <Flame className="w-3.5 h-3.5" /> {profile?.study_streak} day streak
               </span>

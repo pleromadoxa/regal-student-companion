@@ -1,5 +1,5 @@
 import { getAuthUser, getCompanionProfile } from "@/lib/supabase/auth-server";
-import { getDashboardStats } from "@/lib/dashboard-data";
+import { getDashboardStats, type DashboardStats } from "@/lib/dashboard-data";
 import {
   buildBoostContext,
   buildEmpowermentBrief,
@@ -7,11 +7,19 @@ import {
 import { DashboardEmpowerment } from "@/components/dashboard/DashboardEmpowerment";
 
 export async function DashboardEmpowermentLoader({ userId }: { userId: string }) {
-  const [profile, stats, user] = await Promise.all([
-    getCompanionProfile(userId),
-    getDashboardStats(userId),
-    getAuthUser(),
-  ]);
+  let profile: Awaited<ReturnType<typeof getCompanionProfile>> = null;
+  let stats: DashboardStats = { pendingTasks: [], upcomingEvents: [], focusCount: 0 };
+  let user: Awaited<ReturnType<typeof getAuthUser>> = null;
+
+  try {
+    [profile, stats, user] = await Promise.all([
+      getCompanionProfile(userId),
+      getDashboardStats(userId),
+      getAuthUser(),
+    ]);
+  } catch (e) {
+    console.error("[DashboardEmpowermentLoader] data fetch failed:", e);
+  }
 
   const displayName =
     profile?.display_name ?? user?.email?.split("@")[0] ?? "Student";

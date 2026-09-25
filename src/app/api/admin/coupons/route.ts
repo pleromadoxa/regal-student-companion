@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminGateError, requireAdminApi } from "@/lib/admin-api";
 import { logAdminAction } from "@/lib/admin";
+import { isPlanId } from "@/lib/plans";
 
 export async function GET() {
   const gate = await requireAdminApi();
@@ -32,6 +33,9 @@ export async function POST(request: NextRequest) {
 
   if (!body.code?.trim()) {
     return NextResponse.json({ error: "code required" }, { status: 400 });
+  }
+  if (body.planId && !isPlanId(body.planId)) {
+    return NextResponse.json({ error: "Invalid planId" }, { status: 400 });
   }
 
   const { data, error } = await supabase

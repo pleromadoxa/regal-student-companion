@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Download,
   Loader2,
+  Lock,
   Save,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -63,9 +64,12 @@ type Tab = "profile" | "timeline" | "preview";
 export function ContinuousCVClient({
   userId,
   initialEmail,
+  canExport = true,
 }: {
   userId: string;
   initialEmail?: string;
+  /** Plan gate: PDF export requires Graduate (Regal One · Plus) or higher. */
+  canExport?: boolean;
 }) {
   const supabase = createClient();
   const previewRef = useRef<HTMLDivElement>(null);
@@ -141,6 +145,7 @@ export function ContinuousCVClient({
   };
 
   const handleExportPDF = async () => {
+    if (!canExport) return;
     const el = previewRef.current?.querySelector("#cv-preview-export") as HTMLElement | null;
     if (!el) return;
     setExporting(true);
@@ -175,16 +180,28 @@ export function ContinuousCVClient({
         title="Continuous CV"
         description="Build your living academic CV step by step — add internships, achievements, skills, and more. Export a polished PDF anytime."
         action={
-          <Button onClick={handleExportPDF} disabled={exporting}>
+          <Button onClick={handleExportPDF} disabled={exporting || !canExport}>
             {exporting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
+            ) : canExport ? (
               <Download className="w-4 h-4" />
+            ) : (
+              <Lock className="w-4 h-4" />
             )}
             Download PDF
           </Button>
         }
       />
+
+      {!canExport && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-400/25 text-sm text-amber-200/90">
+          PDF export is included with <strong>Graduate, Campus and Ultra</strong> — or any{" "}
+          <strong>Regal One · Plus</strong> plan and above.{" "}
+          <a href="/profile#plans" className="underline font-semibold text-white">
+            View plans
+          </a>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-xl bg-white/5 border border-white/10 mb-6 w-fit">
@@ -346,11 +363,13 @@ export function ContinuousCVClient({
         <div ref={previewRef} className="max-w-2xl mx-auto">
           <CVPreview profile={profile} entries={entries} />
           <div className="flex justify-center mt-6">
-            <Button onClick={handleExportPDF} disabled={exporting} size="lg">
+            <Button onClick={handleExportPDF} disabled={exporting || !canExport} size="lg">
               {exporting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
+              ) : canExport ? (
                 <Download className="w-4 h-4" />
+              ) : (
+                <Lock className="w-4 h-4" />
               )}
               Download beautiful PDF
             </Button>

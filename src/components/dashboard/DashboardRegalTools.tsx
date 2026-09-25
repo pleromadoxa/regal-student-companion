@@ -36,17 +36,17 @@ export function DashboardRegalTools() {
     <section>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg regal-ai-gradient shadow-md shadow-regal-purple-500/20">
+          <div className="p-1.5 rounded-lg regal-ai-gradient shadow-md shadow-regal-purple-500/15">
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-white tracking-tight">Regal AI Tools</h2>
+            <h2 className="text-[15px] font-semibold text-white tracking-tight">Regal AI Tools</h2>
             <p className="text-[10px] text-muted mt-0.5">Smart tools powered by Regal AI</p>
           </div>
         </div>
         <Link
           href="/tools"
-          className="text-xs font-medium text-regal-pink hover:text-regal-pink/80 transition-colors flex items-center gap-1"
+          className="text-[11px] font-medium text-regal-pink hover:text-regal-pink/80 transition-colors duration-150 flex items-center gap-1"
           prefetch
         >
           View all

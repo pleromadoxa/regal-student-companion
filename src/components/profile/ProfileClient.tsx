@@ -32,6 +32,7 @@ import { useToast } from "@/components/ui/Toast";
 import { ProfilePlanSection } from "@/components/profile/ProfilePlanSection";
 import type { CompanionProfile } from "@/types";
 import type { PlanId, PlanLimits } from "@/lib/plans";
+import type { RegalPlanId } from "@/lib/regal-one";
 
 const YEAR_LEVELS = [
   "",
@@ -55,6 +56,11 @@ export type ProfileSubscription = {
   limits: PlanLimits;
   aiUsedToday: number;
   voiceUsedMonth: number;
+  regalPlanId: RegalPlanId;
+  regalTierName: string;
+  viaRegalOne: boolean;
+  viaStudentPlan: boolean;
+  expiresAt: string | null;
 };
 
 type ProfileClientProps = {
@@ -273,6 +279,11 @@ export function ProfileClient({ profile, stats, subscription }: ProfileClientPro
         limits={subscription.limits}
         aiUsedToday={subscription.aiUsedToday}
         voiceUsedMonth={subscription.voiceUsedMonth}
+        regalPlanId={subscription.regalPlanId}
+        regalTierName={subscription.regalTierName}
+        viaRegalOne={subscription.viaRegalOne}
+        viaStudentPlan={subscription.viaStudentPlan}
+        expiresAt={subscription.expiresAt}
       />
 
       <div className="grid lg:grid-cols-2 gap-6">

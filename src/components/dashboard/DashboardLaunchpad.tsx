@@ -29,11 +29,11 @@ export function DashboardLaunchpad() {
     <section>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-400 via-regal-purple-500 to-regal-pink shadow-lg shadow-regal-purple-500/30">
+          <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-400 via-regal-purple-500 to-regal-pink-muted shadow-md shadow-regal-purple-500/20">
             <Crown className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-white tracking-tight">
+            <h2 className="text-[15px] font-semibold text-white tracking-tight">
               Regal Elite Features
             </h2>
             <p className="text-[10px] text-muted">World-class tools no other platform combines</p>
@@ -53,49 +53,49 @@ export function DashboardLaunchpad() {
             >
               <div
                 className={cn(
-                  "absolute inset-0 rounded-2xl bg-gradient-to-br opacity-75 group-hover:opacity-100 transition-opacity",
+                  "absolute inset-0 rounded-2xl bg-gradient-to-br opacity-60 group-hover:opacity-100 transition-opacity duration-300",
                   f.accent
                 )}
               />
-              <div className="relative rounded-[calc(1rem-1px)] bg-[#0a0612]/95 backdrop-blur-sm overflow-hidden h-full">
+              <div className="relative rounded-[calc(1rem-1px)] bg-[#08070f]/95 backdrop-blur-sm overflow-hidden h-full">
                 <div
                   className={cn(
-                    "absolute -top-10 -right-10 w-32 h-32 rounded-full blur-2xl opacity-60 group-hover:opacity-100 transition-opacity",
+                    "absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl opacity-40 group-hover:opacity-80 transition-opacity duration-300",
                     f.glow
                   )}
                 />
                 <div
                   className={cn(
-                    "absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r opacity-80",
+                    "absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r opacity-60 group-hover:opacity-100 transition-opacity duration-300",
                     f.gradient
                   )}
                 />
-                <div className="relative p-4 flex flex-col h-full min-h-[130px]">
+                <div className="relative p-4 flex flex-col h-full min-h-[124px]">
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div
                       className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-lg group-hover:scale-105 transition-transform",
+                        "w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-md group-hover:scale-105 transition-transform duration-200",
                         f.gradient
                       )}
                     >
                       <Icon className="w-5 h-5 text-white" />
                     </div>
                     {f.badge && (
-                      <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/10">
+                      <span className="text-[9px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded-full bg-white/[0.06] text-white/60 border border-white/[0.08]">
                         {f.badge}
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-regal-pink/80">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-regal-pink/70">
                     {f.tagline}
                   </p>
-                  <h3 className="text-sm font-bold text-white mt-0.5 group-hover:text-regal-purple-200 transition-colors">
+                  <h3 className="text-[13px] font-bold text-white mt-0.5 group-hover:text-regal-purple-200 transition-colors duration-150">
                     {f.name}
                   </h3>
-                  <p className="text-[11px] text-white/45 mt-1.5 leading-relaxed line-clamp-2 flex-1">
+                  <p className="text-[11px] text-white/40 mt-1.5 leading-relaxed line-clamp-2 flex-1">
                     {f.description}
                   </p>
-                  <span className="flex items-center gap-1 mt-2 text-[10px] font-medium text-white/30 group-hover:text-white/70 transition-colors">
+                  <span className="flex items-center gap-1 mt-2 text-[10px] font-medium text-white/25 group-hover:text-white/60 transition-colors duration-150">
                     Open <ArrowRight className="w-3 h-3" />
                   </span>
                 </div>

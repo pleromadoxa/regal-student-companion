@@ -16,6 +16,7 @@ export async function GET() {
     { count: openTickets },
     { count: graduatePlans },
     { count: campusPlans },
+    { count: ultraPlans },
     { data: recentActivity },
     { data: dailyActivity },
   ] = await Promise.all([
@@ -43,6 +44,11 @@ export async function GET() {
       .eq("plan_id", "campus")
       .eq("status", "active"),
     supabase
+      .from("companion_subscriptions")
+      .select("user_id", { count: "exact", head: true })
+      .eq("plan_id", "ultra")
+      .eq("status", "active"),
+    supabase
       .from("companion_activity_log")
       .select("id, user_id, action, label, category, points_delta, created_at")
       .order("created_at", { ascending: false })
@@ -62,9 +68,10 @@ export async function GET() {
       activeToday: activeToday ?? 0,
       activeWeek: activeWeek ?? 0,
       openTickets: openTickets ?? 0,
-      paidPlans: (graduatePlans ?? 0) + (campusPlans ?? 0),
+      paidPlans: (graduatePlans ?? 0) + (campusPlans ?? 0) + (ultraPlans ?? 0),
       graduatePlans: graduatePlans ?? 0,
       campusPlans: campusPlans ?? 0,
+      ultraPlans: ultraPlans ?? 0,
     },
     recentActivity: recentActivity ?? [],
     activityByDay: Object.entries(byDay)

@@ -22,7 +22,7 @@ export const getCompanionProfile = cache(
         "id, email, display_name, avatar_url, major, year_level, engagement_points, focus_minutes, study_streak, last_active_date, created_at, updated_at"
       )
       .eq("id", userId)
-      .single();
+      .maybeSingle();
     return data as CompanionProfile | null;
   }
 );

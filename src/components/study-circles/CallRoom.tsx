@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { createFreshChannel, removeChannelSafely } from "@/lib/realtime";
 import {
   endCircleCall,
   joinCircleCall,
@@ -259,9 +260,19 @@ export function CallRoom({
 
     await joinCircleCall(supabase, call.id, isHost, { camera: call.mode === "video", mic: true });
 
-    const channel = supabase.channel(`call-${call.id}`, {
-      config: { broadcast: { self: false }, presence: { key: userId } },
-    });
+    const channel = await createFreshChannel(
+      supabase,
+      `call-${call.id}`,
+      { config: { broadcast: { self: false }, presence: { key: userId } } },
+      "CallRoom"
+    );
+    if (!channel) {
+      // Realtime is unavailable — leave gracefully instead of crashing the shell.
+      console.error("[call] could not create realtime channel");
+      setStatus("ended");
+      onClose();
+      return;
+    }
     channelRef.current = channel;
 
     channel.on("broadcast", { event: "signal" }, async (payload) => {
@@ -383,7 +394,7 @@ export function CallRoom({
     async (endForAll: boolean) => {
       sendSignal({ type: "goodbye", from: userId });
       if (channelRef.current) {
-        await supabase.removeChannel(channelRef.current);
+        await removeChannelSafely(supabase, channelRef.current);
         channelRef.current = null;
       }
       for (const peer of Object.values(peersRef.current)) peer.pc.close();
@@ -565,7 +576,7 @@ export function CallRoom({
                 placeholder={
                   aiCallsAllowed
                     ? "Ask Regal AI to help the group…"
-                    : "Upgrade to Graduate or Campus for live-call Regal AI"
+                    : "Upgrade to Graduate, Campus or Ultra for live-call Regal AI"
                 }
                 className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-muted"
                 disabled={!aiCallsAllowed}
@@ -634,7 +645,7 @@ export function CallRoom({
             title={
               aiCallsAllowed
                 ? "Bring Regal AI into this live study call"
-                : "Upgrade to Graduate or Campus to use Regal AI inside live calls"
+                : "Upgrade to Graduate, Campus or Ultra to use Regal AI inside live calls"
             }
           >
             <Sparkles className="w-4 h-4" />

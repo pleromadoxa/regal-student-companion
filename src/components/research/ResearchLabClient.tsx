@@ -13,6 +13,7 @@ import {
   List,
   Clock,
   FileBarChart,
+  Lock,
   Trash2,
   Download,
   Pencil,
@@ -45,9 +46,12 @@ const NOTE_TYPES: { id: NoteType; label: string; icon: typeof Sparkles; action: 
 export function ResearchLabClient({
   initialProjects,
   userId,
+  advanced = true,
 }: {
   initialProjects: (ResearchProject & { sources?: ResearchSource[]; notes?: ResearchNote[] })[];
   userId: string;
+  /** Plan gate: Scholar gets the basic Research Lab (summaries, FAQs, chat). */
+  advanced?: boolean;
 }) {
   const [projects, setProjects] = useState(initialProjects);
   const [activeProject, setActiveProject] = useState<ResearchProject | null>(null);
@@ -454,23 +458,42 @@ export function ResearchLabClient({
                   <CardDescription>Outputs from {sources.length} source(s)</CardDescription>
                 </CardHeader>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {NOTE_TYPES.filter((n) => n.id !== "chat").map((n) => (
-                    <Button
-                      key={n.id}
-                      size="sm"
-                      variant="secondary"
-                      disabled={loading || sources.length === 0}
-                      onClick={() => void generateNote(n.id)}
-                    >
-                      {loading && activeNoteType === n.id ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <n.icon className="w-3 h-3" />
-                      )}
-                      {n.label}
-                    </Button>
-                  ))}
+                  {NOTE_TYPES.filter((n) => n.id !== "chat").map((n) => {
+                    const locked = !advanced && (n.id === "timeline" || n.id === "briefing");
+                    return (
+                      <Button
+                        key={n.id}
+                        size="sm"
+                        variant="secondary"
+                        disabled={loading || sources.length === 0 || locked}
+                        title={
+                          locked
+                            ? "Timelines & briefings require Graduate (Regal One · Plus)"
+                            : undefined
+                        }
+                        onClick={() => void generateNote(n.id)}
+                      >
+                        {loading && activeNoteType === n.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : locked ? (
+                          <Lock className="w-3 h-3" />
+                        ) : (
+                          <n.icon className="w-3 h-3" />
+                        )}
+                        {n.label}
+                        {locked ? " · Plus" : ""}
+                      </Button>
+                    );
+                  })}
                 </div>
+                {!advanced && (
+                  <p className="text-xs text-muted mb-4">
+                    Timelines & briefings require <strong>Graduate (Regal One · Plus)</strong>.{" "}
+                    <a href="/profile#plans" className="underline text-white">
+                      View plans
+                    </a>
+                  </p>
+                )}
                 <div className="flex gap-2">
                   <Input
                     value={chatQuestion}

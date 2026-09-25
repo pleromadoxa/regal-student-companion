@@ -29,9 +29,9 @@ type ToastContextValue = {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const VARIANT_STYLES: Record<ToastVariant, string> = {
-  success: "border-emerald-400/30 bg-emerald-500/10",
-  error: "border-red-400/30 bg-red-500/10",
-  info: "border-regal-purple-400/30 bg-regal-purple-500/10",
+  success: "border-emerald-400/25 bg-emerald-500/[0.08]",
+  error: "border-red-400/25 bg-red-500/[0.08]",
+  info: "border-regal-purple-400/25 bg-regal-purple-500/[0.08]",
 };
 
 const VARIANT_ICONS = {
@@ -83,12 +83,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 VARIANT_STYLES[t.variant]
               )}
             >
-              <Icon className="w-4 h-4 shrink-0 mt-0.5 text-white" />
-              <p className="text-sm text-white/95 flex-1 leading-snug">{t.message}</p>
+              <Icon className="w-4 h-4 shrink-0 mt-0.5 text-white/80" />
+              <p className="text-[13px] text-white/90 flex-1 leading-snug">{t.message}</p>
               <button
                 type="button"
                 onClick={() => dismiss(t.id)}
-                className="text-white/50 hover:text-white shrink-0"
+                className="text-white/40 hover:text-white shrink-0"
                 aria-label="Dismiss"
               >
                 <X className="w-4 h-4" />

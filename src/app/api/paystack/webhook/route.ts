@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { verifyPaystackSignature, verifyTransaction, paystackSecretKey } from "@/lib/paystack";
 import { activatePlan } from "@/lib/subscription";
-import type { PlanId } from "@/lib/plans";
+import { createServiceClientAsync, hasServiceRoleAsync } from "@/lib/supabase/service";
+import { isPlanId, type PlanId } from "@/lib/plans";
 
 export async function POST(request: NextRequest) {
   if (!paystackSecretKey()) {
@@ -43,11 +43,22 @@ export async function POST(request: NextRequest) {
   if (!reference || !userId || !planId) {
     return NextResponse.json({ error: "Missing metadata" }, { status: 400 });
   }
+  if (!isPlanId(planId) || planId === "scholar") {
+    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+  }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Plan writes require the service role — without it this event cannot be
+  // applied, so tell Paystack to retry rather than silently dropping it.
+  if (!(await hasServiceRoleAsync())) {
+    return NextResponse.json(
+      {
+        error:
+          "Billing activation is not configured on this server (missing SUPABASE_SERVICE_ROLE_KEY).",
+      },
+      { status: 503 }
+    );
+  }
+  const supabase = await createServiceClientAsync();
 
   try {
     const tx = await verifyTransaction(reference);

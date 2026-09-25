@@ -78,18 +78,18 @@ const FEATURES = [
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#08040f] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#06050b] text-white overflow-x-hidden">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-white/10 backdrop-blur-xl bg-[#08040f]/80">
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] backdrop-blur-xl bg-[#06050b]/80">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <Image src="/logo.png" alt="" width={64} height={64} className="rounded-xl shadow-lg shadow-regal-purple-500/25" />
-            <span className="font-bold text-sm hidden sm:block">Regal Companion</span>
+            <Image src="/logo.png" alt="" width={56} height={56} className="rounded-lg shadow-lg shadow-regal-purple-500/20" />
+            <span className="font-bold text-sm hidden sm:block tracking-tight">Regal Companion</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm text-muted">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#how" className="hover:text-white transition-colors">How it works</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+          <nav className="hidden md:flex items-center gap-8 text-[13px] text-muted">
+            <a href="#features" className="hover:text-white transition-colors duration-150">Features</a>
+            <a href="#how" className="hover:text-white transition-colors duration-150">How it works</a>
+            <a href="#pricing" className="hover:text-white transition-colors duration-150">Pricing</a>
           </nav>
           <div className="flex items-center gap-2">
             <a
@@ -126,19 +126,19 @@ export function LandingPage() {
 
       {/* Hero */}
       <section className="relative pt-16 pb-24 px-4 sm:px-6 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-regal-purple-600/20 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[450px] bg-regal-purple-600/15 blur-[120px] rounded-full pointer-events-none" />
         <div className="max-w-6xl mx-auto relative">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             <div className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-regal-purple-400/30 bg-regal-purple-500/10 text-xs font-medium text-regal-purple-200 mb-6">
-                <Sparkles className="w-3.5 h-3.5 text-regal-pink" />
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-regal-purple-400/20 bg-regal-purple-500/[0.08] text-xs font-medium text-regal-purple-200 mb-6">
+                <Sparkles className="w-3 h-3 text-regal-pink" />
                 Built for {REGAL_MAIL_LABEL} students
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight">
                 The academic workspace{" "}
                 <span className="regal-gradient-text">powered by {REGAL_AI}</span>
               </h1>
-              <p className="mt-6 text-lg text-muted max-w-xl mx-auto lg:mx-0 leading-relaxed">
+              <p className="mt-6 text-[15px] text-muted max-w-xl mx-auto lg:mx-0 leading-relaxed">
                 {SITE.description} Plan essays, prep for exams, sync your progress to {REGAL_CLOUD},
                 and access 21+ student tools — all with one {REGAL_MAIL_LABEL} sign-in.
               </p>
@@ -155,8 +155,8 @@ export function LandingPage() {
                 </a>
               </div>
               <div className="mt-6 flex flex-wrap justify-center lg:justify-start gap-4 text-xs text-muted">
-                <span className="flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> Isolated companion data</span>
-                <span className="flex items-center gap-1"><Zap className="w-3.5 h-3.5" /> {REGAL_AI} at the edge</span>
+                <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-emerald-400" /> Isolated companion data</span>
+                <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-regal-pink" /> {REGAL_AI} at the edge</span>
                 <RegalAIBadge />
               </div>
             </div>
@@ -168,26 +168,26 @@ export function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-20 px-4 sm:px-6 border-t border-white/5">
+      <section id="features" className="py-20 px-4 sm:px-6 border-t border-white/[0.04]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold">Everything you need for the semester</h2>
-            <p className="text-muted mt-4">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Everything you need for the semester</h2>
+            <p className="text-muted mt-4 text-[15px]">
               One app replaces scattered tabs, lost notes, and last-minute panic. Regal Companion
               is your command center from syllabus week to finals.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}
                 className="p-5 rounded-2xl glass-panel glass-panel-hover group"
               >
-                <div className="w-10 h-10 rounded-xl regal-ai-gradient flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 rounded-xl regal-ai-gradient flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-200">
                   <Icon className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="font-semibold text-white mb-2">{title}</h3>
-                <p className="text-sm text-muted leading-relaxed">{desc}</p>
+                <h3 className="font-semibold text-white mb-2 text-[14px]">{title}</h3>
+                <p className="text-[13px] text-muted leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -200,10 +200,13 @@ export function LandingPage() {
       <section id="pricing" className="py-24 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold">Simple, student-friendly pricing</h2>
-            <p className="text-muted mt-4">
-              Start free on Scholar. Upgrade anytime with {USER_FACING.securePayments}.
-              Paid plans unlock {REGAL_CLOUD_SHORT}, Exam War Room, and higher {REGAL_AI} limits.
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Simple, student-friendly pricing</h2>
+            <p className="text-muted mt-4 text-[15px]">
+              Start free on Scholar. Every tier mirrors a Regal One plan — Graduate = Regal One ·
+              Plus, Campus = Regal One · Premium, Ultra = Regal One · Ultra — so a Regal One
+              subscription unlocks it here automatically. Upgrade anytime with{" "}
+              {USER_FACING.securePayments}. Paid plans unlock {REGAL_CLOUD_SHORT}, Exam War Room,
+              and higher {REGAL_AI} limits.
             </p>
           </div>
           <PricingCards />
@@ -215,10 +218,10 @@ export function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-4 sm:px-6 border-t border-white/5">
-        <div className="max-w-3xl mx-auto text-center glass-panel rounded-3xl p-10 sm:p-14 border-regal-purple-400/20">
-          <h2 className="text-2xl sm:text-3xl font-bold">Ready to own your semester?</h2>
-          <p className="text-muted mt-3 mb-8">
+      <section className="py-20 px-4 sm:px-6 border-t border-white/[0.04]">
+        <div className="max-w-3xl mx-auto text-center glass-panel rounded-3xl p-10 sm:p-14 border-regal-purple-400/15">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Ready to own your semester?</h2>
+          <p className="text-muted mt-3 mb-8 text-[15px]">
             Join {REGAL_MAIL_LABEL} students using {REGAL_AI}, {REGAL_CLOUD}, and elite study tools on{" "}
             <strong className="text-white">regalcompanion.cloud</strong>.
           </p>

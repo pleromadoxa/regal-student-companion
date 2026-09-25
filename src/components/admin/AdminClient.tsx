@@ -34,6 +34,7 @@ type StatsPayload = {
     paidPlans: number;
     graduatePlans: number;
     campusPlans: number;
+    ultraPlans: number;
   };
   recentActivity: {
     id: string;
@@ -329,6 +330,7 @@ export function AdminClient({ adminEmail }: { adminEmail: string }) {
             <Select value={couponForm.planId} onChange={(e) => setCouponForm({ ...couponForm, planId: e.target.value })}>
               <option value="graduate">Graduate</option>
               <option value="campus">Campus</option>
+              <option value="ultra">Ultra</option>
             </Select>
             <Button onClick={() => void createCoupon()} disabled={!couponForm.code.trim()}>Create</Button>
           </Card>
@@ -408,6 +410,7 @@ export function AdminClient({ adminEmail }: { adminEmail: string }) {
                   <option value="scholar">Scholar (free)</option>
                   <option value="graduate">Graduate</option>
                   <option value="campus">Campus</option>
+                  <option value="ultra">Ultra</option>
                 </Select>
               </div>
               <div>

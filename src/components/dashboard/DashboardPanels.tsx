@@ -15,11 +15,20 @@ function formatDue(date: string | null) {
 }
 
 export async function DashboardPanels({ userId }: { userId: string }) {
-  const { pendingTasks, upcomingEvents } = await getDashboardStats(userId);
+  let pendingTasks: Awaited<ReturnType<typeof getDashboardStats>>["pendingTasks"] = [];
+  let upcomingEvents: Awaited<ReturnType<typeof getDashboardStats>>["upcomingEvents"] = [];
+
+  try {
+    const stats = await getDashboardStats(userId);
+    pendingTasks = stats.pendingTasks;
+    upcomingEvents = stats.upcomingEvents;
+  } catch (e) {
+    console.error("[DashboardPanels] data fetch failed:", e);
+  }
 
   return (
     <>
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -33,22 +42,22 @@ export async function DashboardPanels({ userId }: { userId: string }) {
             </Link>
           </CardHeader>
           {pendingTasks.length === 0 ? (
-            <p className="text-sm text-muted py-4 text-center">No open tasks — add one to get started.</p>
+            <p className="text-[13px] text-muted py-4 text-center">No open tasks — add one to get started.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {pendingTasks.map((task) => (
                 <li
                   key={task.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-regal-purple-400/20 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] hover:border-regal-purple-400/15 hover:bg-white/[0.05] transition-all duration-150"
                 >
                   <div>
-                    <p className="text-sm font-medium text-white">{task.title}</p>
-                    <p className="text-xs text-muted capitalize">
+                    <p className="text-[13px] font-medium text-white">{task.title}</p>
+                    <p className="text-[11px] text-muted capitalize">
                       {task.priority} · {task.status.replace("_", " ")}
                     </p>
                   </div>
                   {task.due_date && (
-                    <span className="text-xs text-regal-pink font-medium">
+                    <span className="text-[11px] text-regal-pink font-medium">
                       {formatDue(task.due_date)}
                     </span>
                   )}
@@ -71,21 +80,21 @@ export async function DashboardPanels({ userId }: { userId: string }) {
             </Link>
           </CardHeader>
           {upcomingEvents.length === 0 ? (
-            <p className="text-sm text-muted py-4 text-center">No upcoming events scheduled.</p>
+            <p className="text-[13px] text-muted py-4 text-center">No upcoming events scheduled.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {upcomingEvents.map((event) => (
                 <li
                   key={event.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]"
                 >
                   <div
-                    className="w-1 h-10 rounded-full shrink-0"
+                    className="w-1 h-8 rounded-full shrink-0"
                     style={{ backgroundColor: event.color }}
                   />
                   <div>
-                    <p className="text-sm font-medium text-white">{event.title}</p>
-                    <p className="text-xs text-muted">
+                    <p className="text-[13px] font-medium text-white">{event.title}</p>
+                    <p className="text-[11px] text-muted">
                       {format(new Date(event.start_at), "EEE, MMM d · h:mm a")}
                     </p>
                   </div>
@@ -96,12 +105,12 @@ export async function DashboardPanels({ userId }: { userId: string }) {
         </Card>
       </div>
 
-      <Card className="border-regal-purple-400/25 bg-gradient-to-br from-regal-purple-900/50 via-transparent to-regal-pink/5 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-regal-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+      <Card className="border-regal-purple-400/15 bg-gradient-to-br from-regal-purple-900/30 via-transparent to-regal-pink/[0.03] overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-56 h-56 bg-regal-purple-500/[0.06] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl regal-ai-gradient shadow-lg shadow-regal-purple-500/20">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="p-2.5 rounded-xl regal-ai-gradient shadow-lg shadow-regal-purple-500/15">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">

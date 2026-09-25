@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { verifyTransaction, isPaystackConfigured } from "@/lib/paystack";
 import { activatePlan } from "@/lib/subscription";
+import { createServiceClientAsync, hasServiceRoleAsync } from "@/lib/supabase/service";
 import { USER_FACING } from "@/lib/branding";
-import type { PlanId } from "@/lib/plans";
+import { isPlanId, type PlanId } from "@/lib/plans";
+
+const BILLING_NOT_CONFIGURED =
+  "Billing activation is not configured on this server (missing SUPABASE_SERVICE_ROLE_KEY).";
 
 export async function GET(request: NextRequest) {
   const reference = new URL(request.url).searchParams.get("reference");
@@ -35,10 +39,20 @@ export async function GET(request: NextRequest) {
     }
 
     const planId = meta?.plan_id ?? "graduate";
+    if (!isPlanId(planId) || planId === "scholar") {
+      return NextResponse.json({ error: "Invalid plan in payment metadata" }, { status: 400 });
+    }
     const periodEnd = new Date();
     periodEnd.setMonth(periodEnd.getMonth() + 1);
 
-    const activation = await activatePlan(supabase, user.id, planId, {
+    // Plan/status columns are privileged: activation must run with the service
+    // role (the browser client can only write usage counters).
+    if (!(await hasServiceRoleAsync())) {
+      return NextResponse.json({ error: BILLING_NOT_CONFIGURED }, { status: 503 });
+    }
+    const db = await createServiceClientAsync();
+
+    const activation = await activatePlan(db, user.id, planId, {
       customer_code: tx.customer?.customer_code,
       period_end: periodEnd.toISOString(),
     });
@@ -46,7 +60,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: activation.error ?? "Plan activation failed" }, { status: 500 });
     }
 
-    const { error: refError } = await supabase
+    const { error: refError } = await db
       .from("companion_subscriptions")
       .update({
         paystack_reference: reference,

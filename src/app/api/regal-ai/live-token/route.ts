@@ -97,7 +97,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       token: token.name,
       model: LIVE_MODEL,
-      voiceRemaining: voiceUsage.remaining - 1,
+      voiceRemaining:
+        voiceUsage.remaining === null ? null : Math.max(0, voiceUsage.remaining - 1),
       studentFirstName,
     });
   } catch (e) {

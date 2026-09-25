@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Plus,
   Send,
@@ -23,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { subscribeSafely } from "@/lib/realtime";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
@@ -60,12 +62,17 @@ export function StudyCirclesClient({
   displayName,
   planId,
   aiCallsAllowed,
+  unlimitedCircles = true,
+  maxCircles = null,
 }: {
   initialCircles: StudyCircle[];
   userId: string;
   displayName: string;
   planId: PlanId;
   aiCallsAllowed: boolean;
+  /** Plan entitlement: Scholar caps owned circles, paid tiers are unlimited. */
+  unlimitedCircles?: boolean;
+  maxCircles?: number | null;
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -76,6 +83,7 @@ export function StudyCirclesClient({
   const [newMessage, setNewMessage] = useState("");
   const [replyTo, setReplyTo] = useState<CircleMessage | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [showJoin, setShowJoin] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -236,46 +244,48 @@ export function StudyCirclesClient({
   }, [syncLiveCalls]);
 
   useEffect(() => {
-    const channel = supabase
-      .channel(`user-circles-${userId}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "companion_study_circles" },
-        (payload) => {
-          const row = payload.new as StudyCircle;
-          setCircles((prev) =>
-            prev.some((circle) => circle.id === row.id)
-              ? prev.map((circle) => (circle.id === row.id ? { ...circle, ...row } : circle))
-              : prev
-          );
-          setActiveCircle((prev) => (prev?.id === row.id ? { ...prev, ...row } : prev));
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "companion_circle_calls" },
-        (payload) => {
-          const row = (payload.new ?? payload.old) as CircleCall | undefined;
-          if (!row?.circle_id) return;
-          if (!circles.some((circle) => circle.id === row.circle_id)) return;
-          if (row.ended_at) {
-            setLiveCallsByCircle((prev) => {
-              const next = { ...prev };
-              delete next[row.circle_id];
-              return next;
-            });
-            if (activeCircle?.active_call_id === row.id) setActiveCallSummary(null);
-            return;
-          }
-          setLiveCallsByCircle((prev) => ({ ...prev, [row.circle_id]: row }));
-          if (activeCircle?.id === row.circle_id) setActiveCallSummary(row);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
+    return subscribeSafely(
+      supabase,
+      `user-circles-${userId}`,
+      (channel) =>
+        channel
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "companion_study_circles" },
+            (payload) => {
+              const row = payload.new as StudyCircle;
+              setCircles((prev) =>
+                prev.some((circle) => circle.id === row.id)
+                  ? prev.map((circle) =>
+                      circle.id === row.id ? { ...circle, ...row } : circle
+                    )
+                  : prev
+              );
+              setActiveCircle((prev) => (prev?.id === row.id ? { ...prev, ...row } : prev));
+            }
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "companion_circle_calls" },
+            (payload) => {
+              const row = (payload.new ?? payload.old) as CircleCall | undefined;
+              if (!row?.circle_id) return;
+              if (!circles.some((circle) => circle.id === row.circle_id)) return;
+              if (row.ended_at) {
+                setLiveCallsByCircle((prev) => {
+                  const next = { ...prev };
+                  delete next[row.circle_id];
+                  return next;
+                });
+                if (activeCircle?.active_call_id === row.id) setActiveCallSummary(null);
+                return;
+              }
+              setLiveCallsByCircle((prev) => ({ ...prev, [row.circle_id]: row }));
+              if (activeCircle?.id === row.circle_id) setActiveCallSummary(row);
+            }
+          ),
+      { label: "StudyCircles" }
+    );
   }, [activeCircle?.active_call_id, activeCircle?.id, circles, supabase, userId]);
 
   useEffect(() => {
@@ -283,98 +293,98 @@ export function StudyCirclesClient({
     void loadMessages(activeCircleId);
     void loadMembers(activeCircleId);
 
-    const channel = supabase
-      .channel(`circle-${activeCircleId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "companion_circle_messages",
-          filter: `circle_id=eq.${activeCircleId}`,
-        },
-        (payload) => {
-          const row = payload.new as CircleMessage;
-          void (async () => {
-            const { data: profile } = await supabase
-              .from("companion_profiles")
-              .select("display_name")
-              .eq("id", row.user_id)
-              .maybeSingle();
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === row.id)) return prev;
-              return [
-                ...prev,
-                {
-                  ...row,
-                  reactions: (row.reactions as Record<string, string[]>) ?? {},
-                  profile: { display_name: profile?.display_name ?? null },
-                },
-              ];
-            });
-          })();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "companion_circle_messages",
-          filter: `circle_id=eq.${activeCircleId}`,
-        },
-        (payload) => {
-          const row = payload.new as CircleMessage;
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === row.id
-                ? {
-                    ...m,
-                    ...row,
-                    reactions: (row.reactions as Record<string, string[]>) ?? {},
-                  }
-                : m
-            )
-          );
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "companion_circle_message_comments",
-          filter: `circle_id=eq.${activeCircleId}`,
-        },
-        (payload) => {
-          const row = payload.new as { parent_message_id: string };
-          setMessages((prev) =>
-            prev.map((message) =>
-              message.id === row.parent_message_id
-                ? { ...message, comment_count: (message.comment_count ?? 0) + 1 }
-                : message
-            )
-          );
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "companion_study_circles",
-          filter: `id=eq.${activeCircleId}`,
-        },
-        (payload) => {
-          const row = payload.new as StudyCircle;
-          setActiveCircle((prev) => (prev ? { ...prev, ...row } : prev));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
+    return subscribeSafely(
+      supabase,
+      `circle-${activeCircleId}`,
+      (channel) =>
+        channel
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "companion_circle_messages",
+              filter: `circle_id=eq.${activeCircleId}`,
+            },
+            (payload) => {
+              const row = payload.new as CircleMessage;
+              void (async () => {
+                const { data: profile } = await supabase
+                  .from("companion_profiles")
+                  .select("display_name")
+                  .eq("id", row.user_id)
+                  .maybeSingle();
+                setMessages((prev) => {
+                  if (prev.some((m) => m.id === row.id)) return prev;
+                  return [
+                    ...prev,
+                    {
+                      ...row,
+                      reactions: (row.reactions as Record<string, string[]>) ?? {},
+                      profile: { display_name: profile?.display_name ?? null },
+                    },
+                  ];
+                });
+              })();
+            }
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "companion_circle_messages",
+              filter: `circle_id=eq.${activeCircleId}`,
+            },
+            (payload) => {
+              const row = payload.new as CircleMessage;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === row.id
+                    ? {
+                        ...m,
+                        ...row,
+                        reactions: (row.reactions as Record<string, string[]>) ?? {},
+                      }
+                    : m
+                )
+              );
+            }
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "companion_circle_message_comments",
+              filter: `circle_id=eq.${activeCircleId}`,
+            },
+            (payload) => {
+              const row = payload.new as { parent_message_id: string };
+              setMessages((prev) =>
+                prev.map((message) =>
+                  message.id === row.parent_message_id
+                    ? { ...message, comment_count: (message.comment_count ?? 0) + 1 }
+                    : message
+                )
+              );
+            }
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "companion_study_circles",
+              filter: `id=eq.${activeCircleId}`,
+            },
+            (payload) => {
+              const row = payload.new as StudyCircle;
+              setActiveCircle((prev) => (prev ? { ...prev, ...row } : prev));
+            }
+          ),
+      { label: "StudyCircles" }
+    );
   }, [activeCircleId, loadMessages, loadMembers, supabase]);
 
   useEffect(() => {
@@ -416,6 +426,19 @@ export function StudyCirclesClient({
 
   const createCircle = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Plan gate: Scholar includes up to `maxCircles` owned circles.
+    if (!unlimitedCircles && maxCircles !== null) {
+      const owned = circles.filter((c) => c.owner_id === userId).length;
+      if (owned >= maxCircles) {
+        setCreateError(
+          `Your plan includes up to ${maxCircles} study circles. Upgrade to Graduate for unlimited circles.`
+        );
+        return;
+      }
+    }
+    setCreateError(null);
+
     const { data: circle } = await supabase
       .from("companion_study_circles")
       .insert({
@@ -707,6 +730,14 @@ export function StudyCirclesClient({
                 Cancel
               </Button>
             </div>
+            {createError && (
+              <div className="text-xs text-amber-300/90 p-3 rounded-xl bg-amber-500/10 border border-amber-400/25 space-y-2">
+                <p>{createError}</p>
+                <Link href="/profile#plans" className="block font-semibold text-white underline">
+                  View plans
+                </Link>
+              </div>
+            )}
           </form>
         </Card>
       )}
@@ -1042,7 +1073,7 @@ export function StudyCirclesClient({
               </Button>
               <p className="text-[10px] text-muted leading-relaxed text-center">
                 {planId === "scholar"
-                  ? "Chat and calls are available now. Regal AI inside live calls unlocks on Graduate."
+                  ? "Chat and calls are available now. Regal AI inside live calls unlocks on Graduate (Regal One · Plus)."
                   : "You have live calls plus Regal AI support inside calls."}
               </p>
             </div>

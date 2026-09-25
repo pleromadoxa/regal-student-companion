@@ -12,7 +12,7 @@ export type DashboardStats = {
 export const getDashboardStats = cache(async (userId: string): Promise<DashboardStats> => {
   const supabase = await createClient();
 
-  const [{ data: tasks }, { data: events }, { count: focusCount }] = await Promise.all([
+  const [tasksResult, eventsResult, focusResult] = await Promise.allSettled([
     supabase
       .from("companion_tasks")
       .select("id, title, priority, status, due_date")
@@ -33,6 +33,10 @@ export const getDashboardStats = cache(async (userId: string): Promise<Dashboard
       .eq("user_id", userId)
       .eq("completed", true),
   ]);
+
+  const tasks = tasksResult.status === "fulfilled" ? tasksResult.value.data : null;
+  const events = eventsResult.status === "fulfilled" ? eventsResult.value.data : null;
+  const focusCount = focusResult.status === "fulfilled" ? focusResult.value.count : null;
 
   return {
     pendingTasks: (tasks ?? []) as Task[],

@@ -27,7 +27,7 @@ const STEPS = [
     icon: CreditCard,
     title: "Choose your plan",
     desc: "Start free on Scholar with core tools and daily Regal AI limits. Upgrade when you need Regal Cloud sync, Exam War Room, and higher AI quotas.",
-    detail: "Graduate and Campus unlock voice tutoring, exports, and priority Regal AI.",
+    detail: "Graduate, Campus and Ultra unlock voice tutoring, exports, and priority Regal AI.",
     cta: { label: "Compare plans", href: "#pricing", external: false },
   },
   {
@@ -50,7 +50,7 @@ const STEPS = [
     n: "05",
     icon: Cloud,
     title: `Back up with ${REGAL_CLOUD}`,
-    desc: "On Graduate and Campus, push tool drafts, mentor chats, CV entries, and exam plans to Regal Cloud. Pull on any device before a new semester or exam week.",
+    desc: "On Graduate, Campus and Ultra, push tool drafts, mentor chats, CV entries, and exam plans to Regal Cloud. Pull on any device before a new semester or exam week.",
     detail: "Your local data stays yours — sync is manual and under your control.",
     cta: null,
   },

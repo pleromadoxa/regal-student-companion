@@ -23,6 +23,7 @@ import { clientIp, rateLimitMemory } from "@/lib/security";
 import {
   checkAiUsage,
   checkFeatureAccess,
+  getUserSubscription,
   incrementAiUsage,
 } from "@/lib/subscription";
 
@@ -68,8 +69,11 @@ export async function POST(request: NextRequest) {
       ? { base64: imageBase64 as string, mimeType: imageMimeType as string }
       : undefined;
 
+  // Resolved once: hybrid plan (Regal One ∨ student plan) + its entitlements.
+  const subscription = await getUserSubscription(supabase, user.id);
+
   if (action === "exam_war_plan" || action === "exam_war_module") {
-    const gate = await checkFeatureAccess(supabase, user.id, "examWarRoom");
+    const gate = await checkFeatureAccess(supabase, user.id, "examWarRoom", subscription);
     if (!gate.ok) {
       return NextResponse.json(
         { error: gate.error, upgradeRequired: gate.upgradeRequired },
@@ -78,7 +82,22 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const usage = await checkAiUsage(supabase, user.id);
+  if (action === "research_briefing" || action === "research_timeline") {
+    const gate = await checkFeatureAccess(
+      supabase,
+      user.id,
+      "researchLabAdvanced",
+      subscription
+    );
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.error, upgradeRequired: gate.upgradeRequired },
+        { status: 403 }
+      );
+    }
+  }
+
+  const usage = await checkAiUsage(supabase, user.id, subscription);
   if (!usage.ok) {
     return NextResponse.json(
       { error: usage.error, upgradeRequired: usage.upgradeRequired },
@@ -90,8 +109,12 @@ export async function POST(request: NextRequest) {
   let aiDetectionScore: number | undefined;
   const aiState: { run: AiRunResult | null } = { run: null };
   const sys = regalSystemInstruction("You assist Regal Student Companion students with academic work.");
+  const aiOptions = {
+    priority: subscription.limits.priorityAi,
+    premiumModel: subscription.limits.priorityModel,
+  };
   const ask = async (prompt: string, systemInstruction?: string, img = image) => {
-    aiState.run = await runRegalAI(action, prompt, systemInstruction, img);
+    aiState.run = await runRegalAI(action, prompt, systemInstruction, img, aiOptions);
     return aiState.run.text;
   };
 
@@ -455,7 +478,7 @@ Rules:
     result = sanitizeAIContent(result);
 
     await Promise.all([
-      incrementAiUsage(supabase, user.id),
+      incrementAiUsage(supabase, user.id, subscription),
       supabase.rpc("companion_log_activity", {
         p_action: "regal_ai",
         p_category: "ai",
@@ -468,7 +491,7 @@ Rules:
 
     return NextResponse.json({
       result,
-      aiRemaining: usage.remaining - 1,
+      aiRemaining: usage.remaining === null ? null : Math.max(0, usage.remaining - 1),
       ...(aiDetectionScore !== undefined ? { aiDetectionScore } : {}),
     });
   } catch (err) {

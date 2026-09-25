@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, MessageSquareText, Send, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { subscribeSafely } from "@/lib/realtime";
 import { Button } from "@/components/ui/Button";
 import { getInitials } from "@/lib/utils";
 import type { CircleMessage, CircleMessageComment } from "@/types";
@@ -61,40 +62,39 @@ export function MessageThreadPanel({
 
     void load();
 
-    const channel = supabase
-      .channel(`thread-${message.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "companion_circle_message_comments",
-          filter: `parent_message_id=eq.${message.id}`,
-        },
-        async (payload) => {
-          const row = payload.new as CircleMessageComment;
-          const { data: profile } = await supabase
-            .from("companion_profiles")
-            .select("display_name, email")
-            .eq("id", row.user_id)
-            .maybeSingle();
-          setComments((prev) => [
-            ...prev,
-            {
-              ...row,
-              profile: {
-                display_name: profile?.display_name ?? null,
-                email: profile?.email,
+    return subscribeSafely(
+      supabase,
+      `thread-${message.id}`,
+      (channel) =>
+        channel.on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "companion_circle_message_comments",
+            filter: `parent_message_id=eq.${message.id}`,
+          },
+          async (payload) => {
+            const row = payload.new as CircleMessageComment;
+            const { data: profile } = await supabase
+              .from("companion_profiles")
+              .select("display_name, email")
+              .eq("id", row.user_id)
+              .maybeSingle();
+            setComments((prev) => [
+              ...prev,
+              {
+                ...row,
+                profile: {
+                  display_name: profile?.display_name ?? null,
+                  email: profile?.email,
+                },
               },
-            },
-          ]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
+            ]);
+          }
+        ),
+      { label: "MessageThreadPanel" }
+    );
   }, [message.id, supabase]);
 
   useEffect(() => {

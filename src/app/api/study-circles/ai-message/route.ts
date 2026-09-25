@@ -4,7 +4,12 @@ import { runRegalAI } from "@/lib/regal-ai-router";
 import { regalSystemInstruction } from "@/lib/regal-ai-system";
 import { sanitizeAIContent } from "@/lib/format-ai-content";
 import { clientIp, rateLimitMemory } from "@/lib/security";
-import { checkAiUsage, checkFeatureAccess, incrementAiUsage } from "@/lib/subscription";
+import {
+  checkAiUsage,
+  checkFeatureAccess,
+  getUserSubscription,
+  incrementAiUsage,
+} from "@/lib/subscription";
 
 type Body = {
   circleId?: string;
@@ -42,12 +47,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Not a member of this circle" }, { status: 403 });
     }
 
+    const subscription = await getUserSubscription(supabase, user.id);
+
     if (body.inCall) {
-      const gate = await checkFeatureAccess(supabase, user.id, "liveVoiceTutor");
+      const gate = await checkFeatureAccess(supabase, user.id, "liveVoiceTutor", subscription);
       if (!gate.ok) {
         return NextResponse.json(
           {
-            error: "Regal AI inside live study calls requires a Graduate or Campus plan.",
+            error:
+              "Regal AI inside live study calls requires Graduate (Regal One · Plus) or higher.",
             upgradeRequired: true,
           },
           { status: 403 }
@@ -55,7 +63,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const usage = await checkAiUsage(supabase, user.id);
+    const usage = await checkAiUsage(supabase, user.id, subscription);
     if (!usage.ok) {
       return NextResponse.json(
         { error: usage.error, upgradeRequired: usage.upgradeRequired },
@@ -111,7 +119,10 @@ export async function POST(request: NextRequest) {
 
     const prompt = `${contextBlock}\n\nStudent asked: ${body.prompt}\n\n${modeInstruction[mode]}`;
 
-    const run = await runRegalAI("mentor_chat", prompt, system);
+    const run = await runRegalAI("mentor_chat", prompt, system, undefined, {
+      priority: subscription.limits.priorityAi,
+      premiumModel: subscription.limits.priorityModel,
+    });
     if (!run?.text) {
       return NextResponse.json({ error: "Regal AI unavailable" }, { status: 503 });
     }
@@ -132,7 +143,7 @@ export async function POST(request: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     await Promise.all([
-      incrementAiUsage(supabase, user.id),
+      incrementAiUsage(supabase, user.id, subscription),
       supabase.rpc("companion_log_activity", {
         p_action: "circle_ai_chat",
         p_category: "ai",
@@ -143,7 +154,10 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    return NextResponse.json({ message: inserted, aiRemaining: usage.remaining - 1 });
+    return NextResponse.json({
+      message: inserted,
+      aiRemaining: usage.remaining === null ? null : Math.max(0, usage.remaining - 1),
+    });
   } catch (err) {
     console.error("[circle-ai]", err);
     return NextResponse.json(

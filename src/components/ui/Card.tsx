@@ -9,7 +9,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "glass-panel rounded-2xl p-5",
+        "glass-panel rounded-2xl p-5 transition-all duration-200",
         hover && "glass-panel-hover cursor-pointer",
         className
       )}
@@ -25,9 +25,9 @@ export function CardHeader({ className, children }: { className?: string; childr
 }
 
 export function CardTitle({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <h3 className={cn("text-base font-semibold text-white tracking-tight", className)}>{children}</h3>;
+  return <h3 className={cn("text-[15px] font-semibold text-white tracking-tight", className)}>{children}</h3>;
 }
 
 export function CardDescription({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <p className={cn("text-sm text-muted mt-0.5 leading-relaxed", className)}>{children}</p>;
+  return <p className={cn("text-[13px] text-muted mt-0.5 leading-relaxed", className)}>{children}</p>;
 }

@@ -356,7 +356,7 @@ export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {
         id: "plans",
         title: "1. Plans",
         paragraphs: [
-          "Scholar is free. Graduate and Campus are paid monthly subscriptions in USD unless otherwise stated.",
+          "Scholar is free. Graduate, Campus and Ultra are paid monthly subscriptions in USD unless otherwise stated.",
         ],
       },
       {
