@@ -119,41 +119,30 @@ export function AchievementVaultClient({
             <div
               key={a.id}
               className={cn(
-                "relative rounded-2xl p-[1px] overflow-hidden transition-all",
-                a.unlocked ? "opacity-100" : "opacity-55"
+                "glass-panel relative rounded-2xl p-4 transition-all",
+                a.unlocked ? "opacity-100" : "opacity-55",
+                "ring-2",
+                a.unlocked ? TIER_RING[a.tier] : "ring-white/5"
               )}
             >
-              <div
-                className={cn(
-                  "absolute inset-0 rounded-2xl bg-gradient-to-br opacity-70",
-                  a.unlocked ? a.gradient : "from-white/10 to-white/5"
-                )}
-              />
-              <div
-                className={cn(
-                  "relative rounded-[calc(1rem-1px)] bg-[#0a0612]/95 p-4 ring-2",
-                  a.unlocked ? TIER_RING[a.tier] : "ring-white/5"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={cn(
-                      "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br",
-                      a.unlocked ? a.gradient : "from-white/10 to-white/5"
-                    )}
-                  >
-                    {a.unlocked ? (
-                      <Icon className="w-5 h-5 text-white" />
-                    ) : (
-                      <Lock className="w-4 h-4 text-white/30" />
-                    )}
-                  </div>
+              <div className="flex items-start gap-3">
+                <div
+                  className={cn(
+                    "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br",
+                    a.unlocked ? a.gradient : "from-white/10 to-white/5"
+                  )}
+                >
+                  {a.unlocked ? (
+                    <Icon className="w-5 h-5 text-white" />
+                  ) : (
+                    <Lock className="w-4 h-4 text-white/30" />
+                  )}
+                </div>
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">{a.tier}</p>
                     <p className="font-semibold text-white text-sm mt-0.5">{a.name}</p>
                     <p className="text-[11px] text-white/45 mt-1 leading-relaxed">{a.description}</p>
                   </div>
-                </div>
               </div>
             </div>
           );

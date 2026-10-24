@@ -37,7 +37,7 @@ function CallbackContent() {
   }, [reference]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#08040f]">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#1f1f1f]">
       <div className="max-w-md w-full glass-panel rounded-2xl p-8 text-center">
         {status === "loading" && (
           <>
@@ -81,7 +81,7 @@ export default function PricingCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#08040f]">
+        <div className="min-h-screen flex items-center justify-center bg-[#1f1f1f]">
           <Loader2 className="w-8 h-8 animate-spin text-regal-purple-400" />
         </div>
       }

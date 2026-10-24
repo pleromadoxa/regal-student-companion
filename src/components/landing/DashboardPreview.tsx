@@ -126,7 +126,7 @@ export function DashboardPreview() {
 
   return (
     <div className="relative rounded-3xl border border-white/10 overflow-hidden shadow-2xl shadow-regal-purple-500/20 edu-hero-float">
-      <div className="absolute inset-0 bg-gradient-to-br from-regal-purple-900/50 via-[#0a0612] to-regal-pink/10 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-regal-purple-900/50 via-[#292929] to-regal-pink/10 pointer-events-none" />
       <div className="absolute top-0 right-0 w-40 h-40 bg-regal-purple-500/15 blur-3xl rounded-full pointer-events-none edu-pulse-slow" />
 
       <div className="relative aspect-[4/3] p-5 sm:p-6 flex flex-col justify-between min-h-[280px]">

@@ -78,9 +78,9 @@ const FEATURES = [
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#06050b] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#1f1f1f] text-white overflow-x-hidden">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] backdrop-blur-xl bg-[#06050b]/80">
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] backdrop-blur-xl bg-[#1f1f1f]/80">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
             <Image src="/logo.png" alt="" width={56} height={56} className="rounded-lg shadow-lg shadow-regal-purple-500/20" />

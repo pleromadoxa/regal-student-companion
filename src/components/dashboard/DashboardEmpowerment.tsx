@@ -70,78 +70,70 @@ export function DashboardEmpowerment({
 
   return (
     <section className="relative">
-      <div className="relative rounded-2xl p-[1px] overflow-hidden bg-gradient-to-br from-regal-purple-500/50 via-regal-pink/30 to-emerald-500/40">
-        <div
-          className={cn(
-            "relative rounded-[calc(1rem-1px)] bg-[#08040f]/95 backdrop-blur-sm overflow-hidden border bg-gradient-to-br",
-            MOOD_STYLES[brief.mood]
-          )}
-        >
-          <div className="absolute top-0 right-0 w-72 h-72 bg-regal-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/8 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative p-5 sm:p-6">
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-5">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="p-2.5 rounded-xl regal-ai-gradient shadow-lg shadow-regal-purple-500/25 shrink-0">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-regal-pink/80 mb-1">
-                    Your pulse · live
-                  </p>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight">
-                    {brief.headline}
-                  </h2>
-                  <p className="text-sm text-white/55 mt-1.5 max-w-xl leading-relaxed">
-                    {brief.subline}
-                  </p>
-                </div>
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-2xl border bg-gradient-to-br",
+          "bg-[var(--regal-surface)]",
+          MOOD_STYLES[brief.mood]
+        )}
+      >
+        <div className="relative p-5 sm:p-6">
+          <div className="mb-5 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="shrink-0 rounded-lg bg-primary/12 p-2.5">
+                <Zap className="w-5 h-5 text-primary" />
               </div>
-
-              <button
-                type="button"
-                onClick={fetchBoost}
-                disabled={boostLoading}
-                className={cn(
-                  "shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium",
-                  "bg-white/8 border border-white/12 hover:bg-white/12 hover:border-regal-purple-400/30",
-                  "transition-all disabled:opacity-60"
-                )}
-              >
-                {boostLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-regal-purple-300" />
-                ) : (
-                  <Wand2 className="w-4 h-4 text-regal-pink" />
-                )}
-                AI boost
-              </button>
-            </div>
-
-            {aiBoost && (
-              <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-regal-purple-500/15 to-regal-pink/10 border border-regal-purple-400/20">
-                <div className="flex gap-2">
-                  <Sparkles className="w-4 h-4 text-regal-pink shrink-0 mt-0.5" />
-                  <p className="text-sm text-white/85 leading-relaxed">{aiBoost}</p>
-                </div>
-                <ResultActions value={aiBoost} filename="daily-boost.md" className="mt-3" />
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2.5 mb-5">
-              {brief.actions.map((action) => (
-                <PowerMoveCard key={action.id} action={action} />
-              ))}
-            </div>
-
-            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-              <Lightbulb className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-200/70 mb-0.5">
-                  Today&apos;s study insight
+              <div className="min-w-0">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary/85">
+                  Your pulse · live
                 </p>
-                <p className="text-xs text-white/55 leading-relaxed">{brief.tip}</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight">
+                  {brief.headline}
+                </h2>
+                <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-white/55">
+                  {brief.subline}
+                </p>
               </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={fetchBoost}
+              disabled={boostLoading}
+              className="regal-btn-secondary flex shrink-0 items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+            >
+              {boostLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              ) : (
+                <Wand2 className="w-4 h-4 text-primary" />
+              )}
+              AI boost
+            </button>
+          </div>
+
+          {aiBoost && (
+            <div className="mb-5 rounded-lg border border-white/[0.07] bg-white/[0.04] p-4">
+              <div className="flex gap-2">
+                <Sparkles className="mt-0.5 w-4 h-4 shrink-0 text-primary" />
+                <p className="text-sm leading-relaxed text-white/85">{aiBoost}</p>
+              </div>
+              <ResultActions value={aiBoost} filename="daily-boost.md" className="mt-3" />
+            </div>
+          )}
+
+          <div className="mb-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-5">
+            {brief.actions.map((action) => (
+              <PowerMoveCard key={action.id} action={action} />
+            ))}
+          </div>
+
+          <div className="flex items-start gap-3 rounded-lg border border-white/[0.06] bg-white/[0.03] p-3.5">
+            <Lightbulb className="mt-0.5 w-4 h-4 shrink-0 text-amber-300" />
+            <div>
+              <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-200/70">
+                Today&apos;s study insight
+              </p>
+              <p className="text-xs leading-relaxed text-white/55">{brief.tip}</p>
             </div>
           </div>
         </div>
@@ -157,40 +149,26 @@ function PowerMoveCard({ action }: { action: EmpowerAction }) {
     <Link
       href={action.href}
       prefetch
-      className="group relative block rounded-xl p-[1px] overflow-hidden hover:scale-[1.02] transition-transform duration-200"
+      className="glass-panel glass-panel-hover group block rounded-lg p-3.5 transition-all duration-200"
     >
-      <div
-        className={cn(
-          "absolute inset-0 rounded-xl bg-gradient-to-br opacity-70 group-hover:opacity-100 transition-opacity",
-          action.gradient
-        )}
-      />
-      <div className="relative rounded-[calc(0.75rem-1px)] bg-[#0a0612]/90 p-3.5 overflow-hidden h-full">
+      <div className="flex h-full items-start gap-2.5">
         <div
           className={cn(
-            "absolute -top-6 -right-6 w-16 h-16 rounded-full blur-xl opacity-60 group-hover:opacity-100",
-            action.glow
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br",
+            action.gradient
           )}
-        />
-        <div className="relative flex items-start gap-2.5">
-          <div
-            className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-gradient-to-br",
-              action.gradient
-            )}
-          >
-            <Icon className="w-3.5 h-3.5 text-white" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
-              {action.label}
-            </p>
-            <p className="text-xs font-medium text-white mt-0.5 line-clamp-2 leading-snug group-hover:text-regal-purple-200 transition-colors">
-              {action.description}
-            </p>
-          </div>
-          <ArrowRight className="w-3 h-3 text-white/20 group-hover:text-white/60 shrink-0 mt-1 transition-colors" />
+        >
+          <Icon className="w-3.5 h-3.5 text-white" />
         </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
+            {action.label}
+          </p>
+          <p className="mt-0.5 line-clamp-2 text-xs font-medium leading-snug text-white transition-colors group-hover:text-primary">
+            {action.description}
+          </p>
+        </div>
+        <ArrowRight className="mt-1 w-3 h-3 shrink-0 text-white/20 transition-colors group-hover:text-primary" />
       </div>
     </Link>
   );

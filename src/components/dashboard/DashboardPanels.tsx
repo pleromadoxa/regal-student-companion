@@ -105,12 +105,11 @@ export async function DashboardPanels({ userId }: { userId: string }) {
         </Card>
       </div>
 
-      <Card className="border-regal-purple-400/15 bg-gradient-to-br from-regal-purple-900/30 via-transparent to-regal-pink/[0.03] overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-56 h-56 bg-regal-purple-500/[0.06] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative">
+      <Card className="overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl regal-ai-gradient shadow-lg shadow-regal-purple-500/15">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="p-2.5 rounded-lg bg-primary/12 shrink-0">
+              <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">

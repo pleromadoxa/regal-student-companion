@@ -27,18 +27,9 @@ const ICONS: Record<string, LucideIcon> = {
 export function DashboardLaunchpad() {
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-400 via-regal-purple-500 to-regal-pink-muted shadow-md shadow-regal-purple-500/20">
-            <Crown className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h2 className="text-[15px] font-semibold text-white tracking-tight">
-              Regal Elite Features
-            </h2>
-            <p className="text-[10px] text-muted">World-class tools no other platform combines</p>
-          </div>
-        </div>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="ws-section-title">Regal Elite Features</h2>
+        <span className="text-xs font-semibold text-primary">Flagship</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -49,56 +40,34 @@ export function DashboardLaunchpad() {
               key={f.slug}
               href={f.href}
               prefetch
-              className="group relative block rounded-2xl p-[1px] overflow-hidden hover:scale-[1.01] transition-all duration-300"
+              className="glass-panel glass-panel-hover group block rounded-lg p-4 transition-all duration-200"
             >
-              <div
-                className={cn(
-                  "absolute inset-0 rounded-2xl bg-gradient-to-br opacity-60 group-hover:opacity-100 transition-opacity duration-300",
-                  f.accent
-                )}
-              />
-              <div className="relative rounded-[calc(1rem-1px)] bg-[#08070f]/95 backdrop-blur-sm overflow-hidden h-full">
-                <div
-                  className={cn(
-                    "absolute -top-10 -right-10 w-28 h-28 rounded-full blur-2xl opacity-40 group-hover:opacity-80 transition-opacity duration-300",
-                    f.glow
-                  )}
-                />
-                <div
-                  className={cn(
-                    "absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r opacity-60 group-hover:opacity-100 transition-opacity duration-300",
-                    f.gradient
-                  )}
-                />
-                <div className="relative p-4 flex flex-col h-full min-h-[124px]">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div
-                      className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-md group-hover:scale-105 transition-transform duration-200",
-                        f.gradient
-                      )}
-                    >
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                    {f.badge && (
-                      <span className="text-[9px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded-full bg-white/[0.06] text-white/60 border border-white/[0.08]">
-                        {f.badge}
-                      </span>
+              <div className="flex h-full min-h-[124px] flex-col">
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <div
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br shadow-sm transition-transform duration-200 group-hover:scale-105",
+                      f.gradient
                     )}
+                  >
+                    <Icon className="w-4.5 h-4.5 text-white" />
                   </div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-regal-pink/70">
-                    {f.tagline}
-                  </p>
-                  <h3 className="text-[13px] font-bold text-white mt-0.5 group-hover:text-regal-purple-200 transition-colors duration-150">
-                    {f.name}
-                  </h3>
-                  <p className="text-[11px] text-white/40 mt-1.5 leading-relaxed line-clamp-2 flex-1">
-                    {f.description}
-                  </p>
-                  <span className="flex items-center gap-1 mt-2 text-[10px] font-medium text-white/25 group-hover:text-white/60 transition-colors duration-150">
-                    Open <ArrowRight className="w-3 h-3" />
-                  </span>
+                  {f.badge && (
+                    <span className="rounded-full border border-white/[0.08] bg-white/[0.05] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-white/60">
+                      {f.badge}
+                    </span>
+                  )}
                 </div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted/80">
+                  {f.tagline}
+                </p>
+                <h3 className="mt-0.5 text-[13px] font-bold text-white">{f.name}</h3>
+                <p className="mt-1.5 line-clamp-2 flex-1 text-[11px] leading-relaxed text-white/45">
+                  {f.description}
+                </p>
+                <span className="mt-2 flex items-center gap-1 text-[10px] font-medium text-white/30 transition-colors duration-150 group-hover:text-primary">
+                  Open <ArrowRight className="w-3 h-3" />
+                </span>
               </div>
             </Link>
           );

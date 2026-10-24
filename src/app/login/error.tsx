@@ -17,7 +17,7 @@ export default function LoginError({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#06050b]">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[#1f1f1f]">
       <div className="max-w-md w-full glass-panel rounded-2xl p-8 text-center">
         <AlertTriangle className="w-10 h-10 text-red-300 mx-auto mb-4" />
         <h1 className="text-xl font-bold text-white mb-2 tracking-tight">Sign-in error</h1>

@@ -11,7 +11,7 @@ export function Input({
     <input
       ref={ref}
       className={cn(
-        "w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-all duration-150 focus:border-regal-purple-400/50 focus:bg-white/[0.06] focus:ring-1 focus:ring-regal-purple-400/30",
+        "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-sm text-white placeholder:text-white/40 outline-none transition-all duration-150 focus:border-primary/50 focus:bg-white/[0.05] focus:ring-1 focus:ring-primary/30",
         className
       )}
       {...props}
@@ -26,7 +26,7 @@ export function Textarea({
   return (
     <textarea
       className={cn(
-        "w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder:text-white/30 outline-none transition-all duration-150 focus:border-regal-purple-400/50 focus:bg-white/[0.06] focus:ring-1 focus:ring-regal-purple-400/30 resize-y min-h-[100px]",
+        "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-sm text-white placeholder:text-white/40 outline-none transition-all duration-150 focus:border-primary/50 focus:bg-white/[0.05] focus:ring-1 focus:ring-primary/30 resize-y min-h-[100px]",
         className
       )}
       {...props}
@@ -57,7 +57,7 @@ export function Select({
   return (
     <select
       className={cn(
-        "w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition-all duration-150 focus:border-regal-purple-400/50",
+        "w-full rounded-md border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-sm text-white outline-none transition-all duration-150 focus:border-primary/50",
         className
       )}
       {...props}

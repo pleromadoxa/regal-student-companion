@@ -111,19 +111,10 @@ export function WordOfTheDay({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl group h-full flex flex-col",
+        "glass-panel relative flex h-full flex-col overflow-hidden rounded-2xl",
         isHero ? "min-h-[280px]" : ""
       )}
     >
-      {/* Animated gradient border */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-regal-purple-500 via-regal-pink to-regal-purple-600 opacity-80 p-[1px]">
-        <div className="absolute inset-[1px] rounded-2xl bg-[#0a0612]" />
-      </div>
-
-      {/* Ambient glow */}
-      <div className="absolute -top-24 -right-24 w-64 h-64 bg-regal-purple-500/20 rounded-full blur-3xl pointer-events-none wotd-glow" />
-      <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-regal-pink/15 rounded-full blur-3xl pointer-events-none" />
-
       <div
         className={cn(
           "relative z-10 p-5 sm:p-6 flex flex-col flex-1 min-h-0",
@@ -133,9 +124,9 @@ export function WordOfTheDay({
         {/* Header row */}
         <div className="flex items-start justify-between gap-4 mb-5">
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-regal-purple-500/20 border border-regal-purple-400/30">
-              <Sparkles className="w-3.5 h-3.5 text-regal-pink" />
-              <span className="text-[11px] font-bold uppercase tracking-widest text-regal-pink">
+            <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/15 px-3 py-1">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[11px] font-bold uppercase tracking-widest text-primary">
                 Word of the Day
               </span>
             </div>
@@ -147,7 +138,7 @@ export function WordOfTheDay({
             <button
               type="button"
               onClick={speak}
-              className="p-2 rounded-xl bg-white/5 border border-white/10 text-muted hover:text-white hover:border-regal-purple-400/40 transition-all"
+              className="rounded-md border border-white/[0.08] bg-white/[0.04] p-2 text-muted transition-all hover:border-primary/40 hover:text-white"
               title="Pronounce"
             >
               <Volume2 className="w-4 h-4" />
@@ -221,7 +212,7 @@ export function WordOfTheDay({
           )}
 
           {example && isHero && (
-            <div className="mt-6 flex gap-3 p-4 rounded-xl bg-white/[0.04] border border-white/10 max-w-2xl">
+            <div className="mt-6 flex gap-3 rounded-lg border border-white/[0.08] bg-white/[0.04] p-4 max-w-2xl">
               <Quote className="w-5 h-5 text-regal-purple-300 shrink-0 mt-0.5 opacity-60" />
               <p className="text-sm text-muted italic leading-relaxed">
                 &ldquo;{example}&rdquo;
@@ -256,14 +247,14 @@ export function WordOfTheDay({
         </div>
 
         {/* Footer CTA */}
-        <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/10">
+        <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/[0.08]">
           <div className="flex items-center gap-2 text-xs text-muted">
             <BookOpen className="w-3.5 h-3.5" />
             <span>Expand your vocabulary daily</span>
           </div>
           <Link
             href={`/dictionary?word=${encodeURIComponent(entry?.word ?? word)}`}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-regal-pink hover:text-white transition-colors group/link"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-white transition-colors group/link"
           >
             Explore in Dictionary
             <ArrowRight className="w-4 h-4 group-hover/link:translate-x-0.5 transition-transform" />

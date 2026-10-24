@@ -9,7 +9,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "glass-panel rounded-2xl p-5 transition-all duration-200",
+        "glass-panel rounded-lg p-5 transition-all duration-200",
         hover && "glass-panel-hover cursor-pointer",
         className
       )}

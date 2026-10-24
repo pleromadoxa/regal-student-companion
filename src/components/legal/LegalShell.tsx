@@ -23,8 +23,8 @@ export function LegalShell({
   activeSlug?: string;
 }) {
   return (
-    <div className="min-h-screen bg-[#08040f] text-white">
-      <header className="sticky top-0 z-50 border-b border-white/10 backdrop-blur-xl bg-[#08040f]/90">
+    <div className="min-h-screen bg-[#1f1f1f] text-white">
+      <header className="sticky top-0 z-50 border-b border-white/10 backdrop-blur-xl bg-[#1f1f1f]/90">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
             <Image src="/logo.png" alt="" width={64} height={64} className="rounded-xl shadow-lg shadow-regal-purple-500/25" />

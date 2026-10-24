@@ -63,7 +63,7 @@ export function JoinCircleDialog({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-2xl bg-[#12081f] border border-white/15 shadow-2xl shadow-black/60 p-5">
+      <div className="relative w-full max-w-lg rounded-2xl bg-[#292929] border border-white/15 shadow-2xl shadow-black/60 p-5">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h2 className="text-lg font-bold text-white">Join a study circle</h2>

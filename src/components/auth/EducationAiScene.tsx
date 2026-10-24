@@ -47,7 +47,7 @@ export function EducationAiScene() {
   }, []);
 
   return (
-    <div className="relative h-full min-h-[280px] sm:min-h-[360px] lg:min-h-[420px] flex flex-col items-center justify-center overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-br from-regal-purple-900/40 via-[#0a0612] to-regal-purple-950/60 p-5 sm:p-8">
+    <div className="relative h-full min-h-[280px] sm:min-h-[360px] lg:min-h-[420px] flex flex-col items-center justify-center overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-br from-regal-purple-900/40 via-[#292929] to-regal-purple-950/60 p-5 sm:p-8">
       {/* Grid backdrop */}
       <div
         className="absolute inset-0 opacity-[0.15] edu-grid-bg"

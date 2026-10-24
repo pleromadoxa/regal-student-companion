@@ -84,7 +84,7 @@ export function HowItWorksSection() {
               return (
                 <div
                   key={step.n}
-                  className="relative flex flex-col lg:flex-row gap-6 lg:gap-10 p-6 sm:p-8 rounded-2xl border border-white/10 bg-[#08040f]/60 glass-panel-hover"
+                  className="relative flex flex-col lg:flex-row gap-6 lg:gap-10 p-6 sm:p-8 rounded-2xl border border-white/10 bg-[#1f1f1f]/60 glass-panel-hover"
                   style={{ animationDelay: `${i * 0.08}s` }}
                 >
                   <div className="flex items-start gap-4 lg:w-72 shrink-0">

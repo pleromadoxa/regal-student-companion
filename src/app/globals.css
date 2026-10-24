@@ -1,30 +1,51 @@
 @import "tailwindcss";
 
-/* ─── Design Tokens — Sophisticated Dark Theme ───────────────────────────── */
+/* ─── Design Tokens — Regal Workspace "calm precision" (dark) ───────────── */
 :root {
-  --regal-purple-50: #f5f0ff;
-  --regal-purple-200: #d4b8ff;
-  --regal-purple-300: #b88aff;
-  --regal-purple-400: #9b5cff;
-  --regal-purple-500: #8a4fff;
-  --regal-purple-600: #7b2cbf;
-  --regal-purple-700: #6b21a8;
-  --regal-purple-900: #3b0764;
-  --regal-pink: #e879f9;
-  --regal-pink-muted: #d946ef;
-  --regal-pink-glow: rgba(232, 121, 249, 0.15);
+  /* Accent scale: rose/primary family (Workspace). The legacy regal-purple
+     variable names are kept so every existing utility class re-tints
+     automatically — this is the global accent, not violet anymore. */
+  --regal-purple-50: #fdf2f8;
+  --regal-purple-200: #fbcfe8;
+  --regal-purple-300: #f9a8d4;
+  --regal-purple-400: #f472b6;
+  --regal-purple-500: #db2777;
+  --regal-purple-600: #be185d;
+  --regal-purple-700: #9d174d;
+  --regal-purple-900: #4c0519;
+  --regal-pink: #f9a8d4;
+  --regal-pink-muted: #ec4899;
+  --regal-pink-glow: rgba(219, 39, 119, 0.15);
 
-  --background: #06050b;
-  --foreground: #f0ecf9;
-  --surface: rgba(255, 255, 255, 0.03);
-  --surface-hover: rgba(255, 255, 255, 0.055);
-  --surface-active: rgba(255, 255, 255, 0.08);
-  --surface-border: rgba(255, 255, 255, 0.06);
-  --surface-border-hover: rgba(255, 255, 255, 0.12);
-  --muted: #8e7faa;
-  --muted-strong: #a99bc6;
-  --glow: rgba(138, 79, 255, 0.12);
-  --glow-strong: rgba(138, 79, 255, 0.22);
+  /* Neutral surfaces — Workspace dark greys, flat and professional. */
+  --background: #1f1f1f;
+  --foreground: #f3f2f1;
+  --surface: #292929;
+  --surface-hover: #323130;
+  --surface-active: #3a3938;
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --surface-border-hover: rgba(255, 255, 255, 0.14);
+  --muted: #c8c6c4;
+  --muted-strong: #a9a7a5;
+  --sidebar: #1b1a19;
+  --glow: rgba(219, 39, 119, 0.12);
+  --glow-strong: rgba(219, 39, 119, 0.22);
+
+  /* Workspace aliases (usable directly in new components) */
+  --regal-bg: var(--background);
+  --regal-surface: var(--surface);
+  --regal-surface-elevated: var(--surface-hover);
+  --regal-border: var(--surface-border);
+  --regal-foreground: var(--foreground);
+  --regal-text-muted: var(--muted);
+  --regal-sidebar: var(--sidebar);
+  --regal-radius: 6px;
+  --color-primary: #db2777;
+  --color-primary-soft: rgba(219, 39, 119, 0.16);
+
+  /* Radii — restrained, Workspace-precise */
+  --radius: 6px;
+  --radius-lg: 8px;
 
   /* Motion tokens */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -37,6 +58,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: #db2777;
   --color-regal-purple-200: var(--regal-purple-200);
   --color-regal-purple-300: var(--regal-purple-300);
   --color-regal-purple-400: var(--regal-purple-400);
@@ -52,8 +74,8 @@
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
   --color-surface-border: var(--surface-border);
-  --color-brand-gray: #1a1a1a;
-  --font-sans: var(--font-geist-sans);
+  --color-brand-gray: #292929;
+  --font-sans: var(--font-jakarta, var(--font-geist-sans));
   --font-mono: var(--font-geist-mono);
 }
 
@@ -67,10 +89,7 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(107, 33, 168, 0.22) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(232, 121, 249, 0.06) 0%, transparent 50%),
-    var(--background);
+  background: var(--background);
   color: var(--foreground);
   min-height: 100vh;
   min-height: 100dvh;
@@ -89,11 +108,11 @@ body {
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(138, 79, 255, 0.25);
+  background: rgba(255, 255, 255, 0.16);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(138, 79, 255, 0.4);
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .scrollbar-none {
@@ -102,27 +121,23 @@ body {
 }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 
-select option { background: #12081f; color: white; }
+select option { background: #292929; color: white; }
 
-/* ─── Auth & Landing Mesh ────────────────────────────────────────────────── */
+/* ─── Auth & Landing Mesh — restrained neutral wash ─────────────────────── */
 .auth-mesh-bg {
   background-image:
-    radial-gradient(at 40% 20%, rgba(138, 79, 255, 0.18) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, rgba(232, 121, 249, 0.1) 0px, transparent 45%),
-    radial-gradient(at 0% 50%, rgba(59, 7, 100, 0.3) 0px, transparent 50%);
+    radial-gradient(at 40% 20%, rgba(219, 39, 119, 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(249, 168, 212, 0.05) 0px, transparent 45%),
+    radial-gradient(at 0% 50%, rgba(76, 5, 25, 0.25) 0px, transparent 50%);
 }
 
-/* ─── Glass Panel — The Core Surface ─────────────────────────────────────── */
+/* ─── Surface Card — The Core Surface (Workspace style) ─────────────────── */
 .glass-panel {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.015) 100%
-  );
+  background: var(--surface);
   border: 1px solid var(--surface-border);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.03) inset,
-    0 4px 24px rgba(0, 0, 0, 0.25);
+    0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
 .glass-panel-hover {
@@ -132,46 +147,55 @@ select option { background: #12081f; color: white; }
     transform var(--duration-normal) var(--ease-out);
 }
 .glass-panel-hover:hover {
-  border-color: rgba(138, 79, 255, 0.22);
+  border-color: rgba(219, 39, 119, 0.35);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 8px 32px var(--glow);
+    0 4px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
 }
 
 /* ─── Typography ─────────────────────────────────────────────────────────── */
 .regal-gradient-text {
-  background: linear-gradient(135deg, #fff 20%, var(--regal-purple-200) 60%, var(--regal-pink) 100%);
+  background: linear-gradient(135deg, #fff 20%, var(--regal-pink) 70%, var(--regal-purple-400) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* ─── Buttons ────────────────────────────────────────────────────────────── */
+/* ─── Buttons — solid, restrained (Workspace regal-btn) ──────────────────── */
 .regal-btn-primary {
-  background: linear-gradient(135deg, var(--regal-purple-500) 0%, var(--regal-purple-700) 100%);
-  border: 1px solid rgba(138, 79, 255, 0.25);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 4px 16px rgba(138, 79, 255, 0.25);
-  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+  background: var(--color-primary);
+  border: 1px solid transparent;
+  box-shadow: none;
+  transition: background var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 .regal-btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 86%, #000);
   transform: translateY(-1px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 8px 24px rgba(138, 79, 255, 0.35);
 }
 .regal-btn-primary:active:not(:disabled) {
   transform: translateY(0);
 }
 .regal-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.regal-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--surface-border);
+  color: var(--foreground);
+  box-shadow: none;
+  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+}
+.regal-btn-secondary:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--surface-border-hover);
+}
+.regal-btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .regal-ai-gradient {
   background: linear-gradient(135deg, var(--regal-purple-500), var(--regal-pink-muted));
 }
 
-/* ─── Badges ─────────────────────────────────────────────────────────────── */
+/* ─── Badges — soft wash, no glow ────────────────────────────────────────── */
 .regal-ai-badge {
   display: inline-flex;
   align-items: center;
@@ -182,9 +206,9 @@ select option { background: #12081f; color: white; }
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  background: linear-gradient(135deg, rgba(138, 79, 255, 0.2), rgba(232, 121, 249, 0.12));
-  border: 1px solid rgba(232, 121, 249, 0.25);
-  color: #e9d5ff;
+  background: rgba(219, 39, 119, 0.14);
+  border: 1px solid rgba(219, 39, 119, 0.3);
+  color: #f9a8d4;
 }
 
 /* ─── Animations — Refined & Subtle ──────────────────────────────────────── */
@@ -217,7 +241,7 @@ select option { background: #12081f; color: white; }
   animation: wotdPulse 5s ease-in-out infinite;
 }
 .wotd-word {
-  background: linear-gradient(135deg, #ffffff 0%, #d4b8ff 45%, #e879f9 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #fbcfe8 45%, #f472b6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -262,7 +286,7 @@ select option { background: #12081f; color: white; }
 .focus-celebrate { animation: focusCelebrate 2.8s ease-out forwards; }
 
 .focus-time-display {
-  background: linear-gradient(135deg, #ffffff 0%, #6ee7b7 40%, #b88aff 75%, #e879f9 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #6ee7b7 40%, #f472b6 75%, #f9a8d4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -286,8 +310,8 @@ select option { background: #12081f; color: white; }
 .focus-mesh {
   background:
     radial-gradient(ellipse 80% 60% at 20% 0%, rgba(52, 211, 153, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at 90% 100%, rgba(138, 79, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(232, 121, 249, 0.04) 0%, transparent 60%);
+    radial-gradient(ellipse 70% 50% at 90% 100%, rgba(219, 39, 119, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(249, 168, 212, 0.04) 0%, transparent 60%);
 }
 
 /* ─── Digital Focus Timer ────────────────────────────────────────────────── */
@@ -313,7 +337,7 @@ select option { background: #12081f; color: white; }
       inset 0 1px 0 rgba(255, 255, 255, 0.08),
       inset 0 -1px 0 rgba(0, 0, 0, 0.35),
       0 12px 40px rgba(0, 0, 0, 0.4),
-      0 0 50px rgba(138, 79, 255, 0.15);
+      0 0 50px rgba(219, 39, 119, 0.15);
   }
 }
 
@@ -350,8 +374,8 @@ select option { background: #12081f; color: white; }
 .focus-digital-glow {
   text-shadow:
     0 0 16px rgba(110, 231, 183, 0.4),
-    0 0 32px rgba(138, 79, 255, 0.25),
-    0 0 48px rgba(232, 121, 249, 0.15);
+    0 0 32px rgba(219, 39, 119, 0.25),
+    0 0 48px rgba(249, 168, 212, 0.15);
 }
 .focus-digital-glow-running {
   animation: digitalGlowPulse 1.8s ease-in-out infinite;
@@ -360,13 +384,13 @@ select option { background: #12081f; color: white; }
   0%, 100% {
     text-shadow:
       0 0 12px rgba(110, 231, 183, 0.35),
-      0 0 24px rgba(138, 79, 255, 0.2);
+      0 0 24px rgba(219, 39, 119, 0.2);
   }
   50% {
     text-shadow:
       0 0 22px rgba(110, 231, 183, 0.6),
-      0 0 44px rgba(138, 79, 255, 0.4),
-      0 0 64px rgba(232, 121, 249, 0.2);
+      0 0 44px rgba(219, 39, 119, 0.4),
+      0 0 64px rgba(249, 168, 212, 0.2);
   }
 }
 
@@ -378,11 +402,11 @@ select option { background: #12081f; color: white; }
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1;
-  background: linear-gradient(165deg, #ffffff 0%, #e9d5ff 35%, #a78bfa 55%, #e879f9 85%);
+  background: linear-gradient(165deg, #ffffff 0%, #fbcfe8 35%, #f472b6 55%, #f9a8d4 85%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 22px rgba(167, 139, 250, 0.35));
+  filter: drop-shadow(0 0 22px rgba(244, 114, 182, 0.35));
 }
 @supports not (-webkit-background-clip: text) {
   .focus-clock-digits { -webkit-text-fill-color: currentColor; background: none; }
@@ -413,14 +437,14 @@ select option { background: #12081f; color: white; }
 .focus-clock-running .focus-clock-digits { animation: clockGlow 2.5s ease-in-out infinite; }
 @keyframes clockGlow {
   0%, 100% { filter: drop-shadow(0 0 16px rgba(110, 231, 183, 0.25)); }
-  50% { filter: drop-shadow(0 0 28px rgba(167, 139, 250, 0.4)); }
+  50% { filter: drop-shadow(0 0 28px rgba(244, 114, 182, 0.4)); }
 }
 
 /* ─── Education Scene Animations ─────────────────────────────────────────── */
 .edu-grid-bg {
   background-image:
-    linear-gradient(rgba(138, 79, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(138, 79, 255, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(219, 39, 119, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(219, 39, 119, 0.06) 1px, transparent 1px);
   background-size: 32px 32px;
   animation: eduGridDrift 28s linear infinite;
 }
@@ -480,7 +504,139 @@ select option { background: #12081f; color: white; }
 @keyframes dashShimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
 .dash-ai-shimmer {
-  background: linear-gradient(105deg, transparent 40%, rgba(232, 121, 249, 0.06) 50%, transparent 60%);
+  background: linear-gradient(105deg, transparent 40%, rgba(249, 168, 212, 0.06) 50%, transparent 60%);
   animation: dashAiSweep 3s ease-in-out infinite;
 }
 @keyframes dashAiSweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+/* ─── Workspace Home Greeting (ported from Regal Workspace) ─────────────── */
+.home-greeting {
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--regal-foreground) 4%, transparent);
+}
+
+.home-greeting__wash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(900px 280px at 0% 0%, color-mix(in srgb, var(--color-primary) 14%, transparent), transparent 55%),
+    radial-gradient(700px 240px at 100% 100%, color-mix(in srgb, #0ea5e9 10%, transparent), transparent 50%),
+    linear-gradient(135deg, color-mix(in srgb, var(--regal-surface) 92%, var(--color-primary)) 0%, var(--regal-surface) 48%, var(--regal-surface) 100%);
+  pointer-events: none;
+}
+
+.home-greeting__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--regal-foreground) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--regal-foreground) 4%, transparent) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(115deg, black 0%, transparent 62%);
+  -webkit-mask-image: linear-gradient(115deg, black 0%, transparent 62%);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.home-greeting__orb {
+  position: absolute;
+  right: -4%;
+  top: -30%;
+  width: min(340px, 55vw);
+  height: min(340px, 55vw);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 40% 40%,
+    color-mix(in srgb, var(--color-primary) 22%, transparent),
+    transparent 68%
+  );
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.home-greeting__title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: clamp(1.65rem, 2.8vw, 2.15rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  color: var(--regal-foreground);
+}
+
+.home-greeting__salute {
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--regal-text-muted);
+}
+
+.home-greeting__name {
+  color: var(--regal-foreground);
+}
+
+/* ─── Workspace section header ──────────────────────────────────────────── */
+.ws-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--regal-text-muted);
+}
+
+/* ─── Workspace search / command button ─────────────────────────────────── */
+.ws-search-btn {
+  background: var(--regal-bg, var(--background));
+  border: 1px solid var(--regal-border);
+  color: var(--regal-text-muted);
+  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+}
+.ws-search-btn:hover {
+  background: var(--regal-surface);
+  border-color: var(--surface-border-hover);
+}
+
+/* ─── Sidebar active rail (spring layout marker) ────────────────────────── */
+.ws-nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: var(--radius);
+  padding: 0.375rem 0.625rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--regal-text-muted);
+  transition: color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+.ws-nav-link:hover {
+  color: var(--regal-foreground);
+  background: rgba(255, 255, 255, 0.05);
+}
+.ws-nav-link[data-active='true'] {
+  color: var(--regal-foreground);
+  background: rgba(255, 255, 255, 0.07);
+}
+.ws-nav-rail {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 16px;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transform: translateY(-50%);
+}
+
+/* ─── Command palette (Workspace CommandPalette) ────────────────────────── */
+.cmdk-shell {
+  background: var(--regal-surface);
+  border: 1px solid var(--regal-border);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+.cmdk-item[data-selected='true'] {
+  background: rgba(255, 255, 255, 0.07);
+}
+.cmdk-item[data-selected='true'] .cmdk-item-icon {
+  color: var(--color-primary);
+}

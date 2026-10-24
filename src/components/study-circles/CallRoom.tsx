@@ -520,7 +520,7 @@ export function CallRoom({
   const total = participants.length + (participants.some((p) => p.user_id === userId) ? 0 : 1);
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-[#08040f]">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-[#1f1f1f]">
       <header className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="min-w-0">
           <p className="text-[11px] uppercase tracking-widest text-regal-pink font-semibold">
@@ -570,7 +570,7 @@ export function CallRoom({
         {showAI && (
           <form
             onSubmit={submitAI}
-            className="absolute left-3 right-3 bottom-full mb-2 bg-[#12081f] border border-white/15 rounded-2xl p-3 shadow-2xl"
+            className="absolute left-3 right-3 bottom-full mb-2 bg-[#292929] border border-white/15 rounded-2xl p-3 shadow-2xl"
           >
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-regal-pink shrink-0" />

@@ -44,25 +44,25 @@ export function StatCard({
   href?: string;
 }) {
   const accents = {
-    purple: { text: "text-regal-purple-300", bg: "from-regal-purple-500/15" },
-    pink: { text: "text-regal-pink", bg: "from-regal-pink/15" },
-    emerald: { text: "text-emerald-400", bg: "from-emerald-500/15" },
-    amber: { text: "text-amber-400", bg: "from-amber-500/15" },
+    purple: { text: "text-primary", bg: "bg-primary/12" },
+    pink: { text: "text-regal-pink", bg: "bg-regal-pink/12" },
+    emerald: { text: "text-emerald-400", bg: "bg-emerald-500/12" },
+    amber: { text: "text-amber-400", bg: "bg-amber-500/12" },
   };
   const a = accents[accent];
   const Wrapper = href ? "a" : "div";
   return (
     <Wrapper
       {...(href ? { href } : {})}
-      className="glass-panel glass-panel-hover rounded-2xl p-5 block"
+      className="glass-panel glass-panel-hover rounded-lg p-4 block"
     >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[10px] font-semibold text-muted uppercase tracking-[0.08em]">{label}</p>
-          <p className="text-[28px] font-bold text-white mt-2 tabular-nums tracking-tight">{value}</p>
+          <p className="text-[26px] font-bold text-white mt-1.5 tabular-nums tracking-tight">{value}</p>
         </div>
-        <div className={cn("p-2.5 rounded-xl bg-gradient-to-br to-transparent", a.bg)}>
-          <Icon className={cn("w-5 h-5", a.text)} />
+        <div className={cn("p-2 rounded-md", a.bg)}>
+          <Icon className={cn("w-4.5 h-4.5", a.text)} />
         </div>
       </div>
     </Wrapper>
@@ -82,11 +82,11 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] mb-4">
-        <Icon className="w-8 h-8 text-muted" />
+      <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.07] mb-4">
+        <Icon className="w-7 h-7 text-muted" />
       </div>
       <p className="text-white font-medium">{title}</p>
-      <p className="text-sm text-muted mt-1 max-w-sm">{description}</p>
+      <p className="text-sm text-muted mt-1 max-w-sm leading-relaxed">{description}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

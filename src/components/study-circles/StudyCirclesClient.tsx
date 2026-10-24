@@ -1250,7 +1250,7 @@ function MessageBubble({
           {showQuick && (
             <div
               className={cn(
-                "absolute -top-8 flex gap-0.5 bg-[#12081f] border border-white/15 rounded-full shadow-lg px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
+                "absolute -top-8 flex gap-0.5 bg-[#292929] border border-white/15 rounded-full shadow-lg px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
                 isOwn ? "right-0" : "left-0"
               )}
             >

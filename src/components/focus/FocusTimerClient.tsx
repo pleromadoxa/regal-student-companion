@@ -599,15 +599,10 @@ export function DashboardFocusMode({
   return (
     <>
       <section id="focus-mode" className="scroll-mt-24 h-full min-h-[20rem]">
-        <div className="relative h-full min-h-[20rem] rounded-2xl overflow-hidden group">
-          {/* Gradient border — harmonized with Word of the Day */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-400/80 via-regal-purple-500 to-regal-pink opacity-80 p-[1px]">
-            <div className="absolute inset-[1px] rounded-2xl bg-[#08040f]" />
-          </div>
-
-          <div className="absolute inset-[1px] rounded-2xl focus-mesh pointer-events-none" />
+        <div className="glass-panel group relative h-full min-h-[20rem] overflow-hidden rounded-2xl">
+          <div className="absolute inset-0 focus-mesh pointer-events-none" />
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none focus-glow" />
-          <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-regal-pink/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-regal-pink/[0.07] rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 h-full flex flex-col p-4 sm:p-5">
             <div className="flex items-center justify-between gap-2 mb-2 shrink-0">

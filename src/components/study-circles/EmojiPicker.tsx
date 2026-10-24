@@ -83,7 +83,7 @@ export function EmojiPicker({
     <div
       ref={containerRef}
       className={cn(
-        "absolute bottom-14 z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl bg-[#12081f] border border-white/15 shadow-2xl shadow-black/60 p-3",
+        "absolute bottom-14 z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl bg-[#292929] border border-white/15 shadow-2xl shadow-black/60 p-3",
         align === "right" ? "right-0" : "left-0"
       )}
     >

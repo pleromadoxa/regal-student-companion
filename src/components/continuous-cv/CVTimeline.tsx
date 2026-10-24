@@ -87,12 +87,11 @@ export function CVTimeline({
       </div>
 
       {/* Add entry palette */}
-      <div className="relative rounded-2xl p-[1px] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-regal-purple-500/60 via-regal-pink/30 to-emerald-500/40 opacity-80" />
-        <div className="relative rounded-[calc(1rem-1px)] bg-[#0a0612]/95 backdrop-blur-sm p-5 sm:p-6">
+      <div className="glass-panel relative overflow-hidden rounded-2xl">
+        <div className="relative p-5 sm:p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-xl regal-ai-gradient shadow-lg shadow-regal-purple-500/20">
-              <Plus className="w-4 h-4 text-white" />
+            <div className="p-2 rounded-xl bg-primary/12">
+              <Plus className="w-4 h-4 text-primary" />
             </div>
             <div>
               <h2 className="text-sm font-semibold text-white">Add to your timeline</h2>
@@ -216,9 +215,9 @@ function TimelineNode({
         <div
           className={cn(
             "w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center",
-            "bg-gradient-to-br ring-4 ring-[#0a0612]",
+            "bg-gradient-to-br ring-4 ring-[#1f1f1f]",
             theme.iconGradient,
-            isFirst && "animate-pulse ring-regal-purple-500/20"
+            isFirst && "animate-pulse ring-primary/20"
           )}
         >
           <Icon className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-white drop-shadow-sm" />
@@ -237,24 +236,10 @@ function TimelineNode({
       <div className="flex-1 min-w-0 pt-0.5 group">
         <div
           className={cn(
-            "relative rounded-2xl p-[1px] overflow-hidden transition-all duration-300",
-            "hover:scale-[1.01] hover:shadow-lg hover:shadow-black/25"
+            "glass-panel relative overflow-hidden rounded-2xl transition-all duration-200"
           )}
         >
-          <div
-            className={cn(
-              "absolute inset-0 rounded-2xl bg-gradient-to-br opacity-60 group-hover:opacity-100 transition-opacity",
-              theme.accentGradient
-            )}
-          />
-
-          <div className="relative rounded-[calc(1rem-1px)] bg-[#0a0612]/95 backdrop-blur-sm overflow-hidden">
-            <div
-              className={cn(
-                "absolute -top-10 -right-10 w-32 h-32 rounded-full blur-2xl opacity-50 group-hover:opacity-80 transition-opacity",
-                theme.glowColor
-              )}
-            />
+          <div className="relative overflow-hidden">
             <div
               className={cn(
                 "absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r opacity-70",
@@ -352,13 +337,11 @@ function TimelineNode({
 
 function EmptyTimeline({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="relative rounded-2xl p-[1px] overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-regal-purple-500/40 via-transparent to-regal-pink/30" />
-      <div className="relative rounded-[calc(1rem-1px)] bg-[#0a0612]/90 py-16 px-6 text-center">
+    <div className="glass-panel relative overflow-hidden rounded-2xl">
+      <div className="relative px-6 py-16 text-center">
         <div className="relative mx-auto w-16 h-16 mb-5">
-          <div className="absolute inset-0 rounded-full bg-regal-purple-500/20 blur-xl" />
-          <div className="relative w-full h-full rounded-2xl regal-ai-gradient flex items-center justify-center shadow-lg shadow-regal-purple-500/30">
-            <Clock className="w-7 h-7 text-white" />
+          <div className="relative w-full h-full rounded-2xl bg-primary/12 flex items-center justify-center">
+            <Clock className="w-7 h-7 text-primary" />
           </div>
         </div>
         <h3 className="text-lg font-semibold text-white">Your timeline is empty</h3>

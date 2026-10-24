@@ -34,19 +34,11 @@ const ICONS: Record<string, LucideIcon> = {
 export function DashboardRegalTools() {
   return (
     <section>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg regal-ai-gradient shadow-md shadow-regal-purple-500/15">
-            <Sparkles className="w-3.5 h-3.5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-[15px] font-semibold text-white tracking-tight">Regal AI Tools</h2>
-            <p className="text-[10px] text-muted mt-0.5">Smart tools powered by Regal AI</p>
-          </div>
-        </div>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="ws-section-title">Regal AI Tools</h2>
         <Link
           href="/tools"
-          className="text-[11px] font-medium text-regal-pink hover:text-regal-pink/80 transition-colors duration-150 flex items-center gap-1"
+          className="text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors duration-150 flex items-center gap-1"
           prefetch
         >
           View all

@@ -101,7 +101,7 @@ export function InviteDialog({ circleId, circleName, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-2xl bg-[#12081f] border border-white/15 shadow-2xl shadow-black/60 p-5">
+      <div className="relative w-full max-w-md rounded-2xl bg-[#292929] border border-white/15 shadow-2xl shadow-black/60 p-5">
         <div className="flex items-start justify-between gap-2 mb-4">
           <div>
             <h2 className="text-lg font-bold text-white">Invite to study circle</h2>
@@ -121,7 +121,7 @@ export function InviteDialog({ circleId, circleName, onClose }: Props) {
               className="mt-1 w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-sm text-white outline-none focus:border-regal-purple-400/50"
             >
               {TTL_OPTIONS.map((o) => (
-                <option key={o.hours} value={o.hours} className="bg-[#12081f]">
+                <option key={o.hours} value={o.hours} className="bg-[#292929]">
                   {o.label}
                 </option>
               ))}
