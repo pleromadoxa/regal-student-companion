@@ -121,7 +121,9 @@ export function MyCoursesClient({ userId }: { userId: string }) {
   }, [supabase, userId]);
 
   useEffect(() => {
-    void loadAll();
+    void (async () => {
+      await loadAll();
+    })();
   }, [loadAll]);
 
   const loadSubjectMaterial = useCallback(
@@ -133,8 +135,10 @@ export function MyCoursesClient({ userId }: { userId: string }) {
   );
 
   useEffect(() => {
-    if (activeSubjectId) void loadSubjectMaterial(activeSubjectId);
-    else setMaterial(null);
+    void (async () => {
+      if (activeSubjectId) await loadSubjectMaterial(activeSubjectId);
+      else setMaterial(null);
+    })();
   }, [activeSubjectId, loadSubjectMaterial]);
 
   const runGeneration = async (

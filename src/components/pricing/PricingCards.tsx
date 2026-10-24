@@ -47,7 +47,7 @@ export function PricingCards({
       const data = (await res.json()) as { authorization_url?: string; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Checkout failed");
       if (data.authorization_url) {
-        window.location.href = data.authorization_url;
+        window.location.assign(data.authorization_url);
         return;
       }
       throw new Error("No payment URL returned");

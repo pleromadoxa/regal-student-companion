@@ -146,7 +146,9 @@ export function AdminClient({ adminEmail }: { adminEmail: string }) {
   }, [tab, search, loadStats, loadUsers, loadSubscriptions, loadCoupons, loadSupport, loadHealth]);
 
   useEffect(() => {
-    void refresh();
+    void (async () => {
+      await refresh();
+    })();
   }, [tab, refresh]);
 
   const applyPlan = async (userId: string) => {
@@ -196,7 +198,7 @@ export function AdminClient({ adminEmail }: { adminEmail: string }) {
     <div className="page-enter max-w-6xl mx-auto space-y-6">
       <PageHeader
         title="Admin Console"
-        description={`Quantum Regal · Regal Student Companion · signed in as ${adminEmail}`}
+        description={`Spatial Regal · Regal Student Companion · signed in as ${adminEmail}`}
         action={
           <Button variant="secondary" size="sm" onClick={() => void refresh()} disabled={loading}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}

@@ -112,14 +112,15 @@ export function ScheduleTool() {
   }, []);
 
   useEffect(() => {
-    if (window.matchMedia("(min-width: 768px)").matches) {
-      setView("grid");
-    }
+    void (async () => {
+      if (window.matchMedia("(min-width: 768px)").matches) {
+        setView("grid");
+      }
+    })();
   }, []);
 
   const loadBlocks = useCallback(async () => {
     if (!uid) return;
-    setLoading(true);
     const { data } = await supabase
       .from("companion_schedule_blocks")
       .select("*")
@@ -131,8 +132,10 @@ export function ScheduleTool() {
   }, [uid, supabase]);
 
   useEffect(() => {
-    if (ready && uid) loadBlocks();
-    else if (ready) setLoading(false);
+    void (async () => {
+      if (ready && uid) await loadBlocks();
+      else if (ready) setLoading(false);
+    })();
   }, [ready, uid, loadBlocks]);
 
   const totalHours = useMemo(

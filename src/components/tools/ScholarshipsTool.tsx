@@ -274,7 +274,6 @@ export function ScholarshipsTool() {
 
   const fetchScholarships = useCallback(async () => {
     if (!uid) return;
-    setLoading(true);
     const { data } = await supabase
       .from("companion_scholarships")
       .select("*")
@@ -285,8 +284,10 @@ export function ScholarshipsTool() {
   }, [uid, supabase]);
 
   useEffect(() => {
-    if (ready && uid) fetchScholarships();
-    else if (ready) setLoading(false);
+    void (async () => {
+      if (ready && uid) await fetchScholarships();
+      else if (ready) setLoading(false);
+    })();
   }, [ready, uid, fetchScholarships]);
 
   const filtered = useMemo(() => {

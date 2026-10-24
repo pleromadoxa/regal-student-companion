@@ -12,16 +12,16 @@ function CallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const reference = searchParams.get("reference");
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  // Derived up front instead of in an effect: a missing reference is an
+  // immediate error, not a loading→error transition.
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    reference ? "loading" : "error"
+  );
   const [planId, setPlanId] = useState<PlanId>("graduate");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(reference ? "" : "Missing payment reference.");
 
   useEffect(() => {
-    if (!reference) {
-      setStatus("error");
-      setMessage("Missing payment reference.");
-      return;
-    }
+    if (!reference) return;
 
     fetch(`/api/paystack/verify?reference=${encodeURIComponent(reference)}`)
       .then(async (res) => {

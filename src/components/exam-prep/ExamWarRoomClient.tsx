@@ -193,20 +193,26 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
   }, [userId]);
 
   useEffect(() => {
-    void loadExams();
-    const saved = loadState(userId);
-    if (saved?.version === 2) {
-      setBriefing(saved.briefing);
-      setModules(saved.modules);
-      setChecklist(saved.checklist);
-      if (saved.briefing.examSystemId) {
-        const sys = getExamSystem(saved.briefing.examSystemId);
-        if (sys) setRegion(sys.region);
+    void (async () => {
+      void loadExams();
+      const saved = loadState(userId);
+      if (saved?.version === 2) {
+        setBriefing(saved.briefing);
+        setModules(saved.modules);
+        setChecklist(saved.checklist);
+        if (saved.briefing.examSystemId) {
+          const sys = getExamSystem(saved.briefing.examSystemId);
+          if (sys) setRegion(sys.region);
+        }
       }
-    }
+    })();
   }, [loadExams, userId]);
 
-  useEffect(() => {
+  const [prevSelectedExamId, setPrevSelectedExamId] = useState(selectedExamId);
+  const [prevExams, setPrevExams] = useState(exams);
+  if (prevSelectedExamId !== selectedExamId || prevExams !== exams) {
+    setPrevSelectedExamId(selectedExamId);
+    setPrevExams(exams);
     const exam = exams.find((e) => e.id === selectedExamId);
     if (exam) {
       setBriefing((b) => ({
@@ -216,7 +222,7 @@ export function ExamWarRoomClient({ userId }: { userId: string }) {
         examDate: exam.exam_date.slice(0, 10),
       }));
     }
-  }, [selectedExamId, exams]);
+  }
 
   const updateBriefing = (patch: Partial<WarRoomBriefing>) => {
     setBriefing((b) => {

@@ -20,6 +20,7 @@ interface CloudflareEnv {
   EMAIL_FROM_ADDRESS?: string;
   CLOUDFLARE_AI_MODEL?: string;
   GEMINI_API_KEY?: string;
+  GEMINI_MODEL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   PAYSTACK_SECRET_KEY?: string;
 }

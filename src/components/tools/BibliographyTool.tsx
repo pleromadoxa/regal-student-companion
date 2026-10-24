@@ -130,7 +130,9 @@ export function BibliographyTool() {
   const [exported, setExported] = useState(false);
 
   useEffect(() => {
-    setLibrary(loadLibrary());
+    void (async () => {
+      setLibrary(loadLibrary());
+    })();
   }, []);
 
   const persistLibrary = useCallback((entries: BibliographyEntry[]) => {

@@ -6,7 +6,7 @@ import type { ActivityLogEntry } from "@/lib/activity-log";
 
 export const metadata: Metadata = {
   title: "Activity Log",
-  description: "Your Regal Student Companion activity on Quantum Regal.",
+  description: "Your Regal Student Companion activity on Spatial Regal.",
 };
 
 export default async function ActivityPage() {

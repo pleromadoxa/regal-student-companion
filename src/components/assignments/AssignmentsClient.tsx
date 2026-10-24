@@ -12,6 +12,8 @@ import {
   Loader2,
   Plus,
   Trash2,
+  FileCheck,
+  AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -21,12 +23,19 @@ import { askRegalAI, REGAL_AI_NAME } from "@/lib/regal-ai";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
+import { ResultActions } from "@/components/ui/ResultActions";
+import { extractDocumentText } from "@/lib/extract-document";
 import { cn } from "@/lib/utils";
 import type { Assignment } from "@/types";
 
-type ToolTab = "scan" | "cite" | "essay" | "transcribe" | "humanize";
+type ToolTab = "answer" | "scan" | "cite" | "essay" | "transcribe" | "humanize";
+
+function buildUploadPath(userId: string, fileName: string): string {
+  return `${userId}/${Date.now()}-${fileName}`;
+}
 
 const TOOLS: { id: ToolTab; label: string; icon: typeof Scan; desc: string }[] = [
+  { id: "answer", label: "Answer Doc", icon: FileCheck, desc: "Return your document with every question answered" },
   { id: "scan", label: "Regal AI Scan", icon: Scan, desc: "Analyze uploaded documents" },
   { id: "cite", label: "Regal AI Citations", icon: Quote, desc: "Generate formatted citations" },
   { id: "essay", label: "Regal AI Essay Guide", icon: PenLine, desc: "Structured writing guidance" },
@@ -48,6 +57,8 @@ export function AssignmentsClient({
   const [aiScore, setAiScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadNotice, setUploadNotice] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newCourse, setNewCourse] = useState("");
@@ -79,6 +90,10 @@ export function AssignmentsClient({
       } else if (activeTab === "cite") {
         body.text = inputText;
         body.style = citationStyle;
+      } else if (activeTab === "answer") {
+        // Full-document, in-place answering (any subject, any language).
+        body.action = "research_answer";
+        body.sources = inputText;
       } else {
         body.text = inputText;
       }
@@ -99,22 +114,26 @@ export function AssignmentsClient({
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = ""; // allow re-selecting the same file
     setUploading(true);
+    setUploadError(null);
+    setUploadNotice(null);
 
     try {
+      // Extract real text first — PDF, DOCX, DOC, or TXT, any language.
+      const extracted = await extractDocumentText(file);
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const path = `${user.id}/${Date.now()}-${file.name}`;
+      const path = buildUploadPath(user.id, file.name);
       const { error: uploadError } = await supabase.storage
         .from("companion-documents")
         .upload(path, file);
 
       if (uploadError) throw uploadError;
-
-      const text = await file.text().catch(() => `[Binary file: ${file.name}]`);
 
       const { data: assignment } = await supabase
         .from("companion_assignments")
@@ -136,13 +155,22 @@ export function AssignmentsClient({
           mime_type: file.type,
           scan_status: "scanning",
         });
-
-        setInputText(text.slice(0, 10000));
-        setActiveTab("scan");
-        await refresh();
       }
+
+      // Load the extracted text straight into the Answer Doc tool.
+      setInputText(extracted.text);
+      setActiveTab("answer");
+      setResult("");
+      setUploadNotice(
+        extracted.truncated
+          ? `Read your ${extracted.kind.toUpperCase()} (${extracted.charCount.toLocaleString()} characters). Only the first ${extracted.text.length.toLocaleString()} will be processed — split long documents for full coverage.`
+          : `Read your ${extracted.kind.toUpperCase()} (${extracted.charCount.toLocaleString()} characters). Review the text below, then run ${REGAL_AI_NAME} Answer Doc.`
+      );
+      await refresh();
     } catch (err) {
-      setResult(err instanceof Error ? err.message : "Upload failed");
+      setUploadError(
+        err instanceof Error ? err.message : "Upload failed. Please try another file."
+      );
     } finally {
       setUploading(false);
     }
@@ -243,23 +271,35 @@ export function AssignmentsClient({
             <CardHeader>
               <CardTitle>Document Upload</CardTitle>
               <CardDescription>
-                Upload PDF, DOCX, or TXT for real-time Regal AI scanning
+                Upload PDF, DOCX, DOC, or TXT — the text is extracted in your
+                browser and loaded into Answer Doc automatically
               </CardDescription>
             </CardHeader>
             <label className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-regal-purple-400/50 transition-colors">
               <Upload className="w-8 h-8 text-regal-purple-300 mb-2" />
               <p className="text-sm text-white font-medium">
-                {uploading ? "Uploading..." : "Drop a file or click to upload"}
+                {uploading ? "Reading document..." : "Drop a file or click to upload"}
               </p>
-              <p className="text-xs text-muted mt-1">PDF, DOCX, TXT up to 50MB</p>
+              <p className="text-xs text-muted mt-1">PDF, DOCX, DOC, TXT up to 50MB</p>
               <input
                 type="file"
                 className="hidden"
-                accept=".pdf,.doc,.docx,.txt"
+                accept=".pdf,.doc,.docx,.txt,.md"
                 onChange={handleUpload}
                 disabled={uploading}
               />
             </label>
+            {uploadNotice && (
+              <p className="text-xs text-emerald-200/90 bg-emerald-500/10 border border-emerald-400/20 rounded-lg px-3 py-2 mt-3">
+                {uploadNotice}
+              </p>
+            )}
+            {uploadError && (
+              <p className="text-xs text-red-200 bg-red-500/10 border border-red-400/20 rounded-lg px-3 py-2 mt-3 flex items-start gap-2">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                {uploadError}
+              </p>
+            )}
           </Card>
 
           <div className="flex flex-wrap gap-2">
@@ -320,17 +360,21 @@ export function AssignmentsClient({
                   <Label>
                     {activeTab === "cite"
                       ? "Source information"
-                      : "Text content"}
+                      : activeTab === "answer"
+                        ? "Document (upload above or paste — any subject, any language)"
+                        : "Text content"}
                   </Label>
                   <Textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder={
-                      activeTab === "scan"
-                        ? "Paste document text or upload a file above..."
-                        : activeTab === "cite"
-                          ? "Author, title, year, URL, etc."
-                          : "Paste your text here..."
+                      activeTab === "answer"
+                        ? "Paste your assignment, quiz, or worksheet here — or upload the file above. Every question gets answered, the rest stays intact."
+                        : activeTab === "scan"
+                          ? "Paste document text or upload a file above..."
+                          : activeTab === "cite"
+                            ? "Author, title, year, URL, etc."
+                            : "Paste your text here..."
                     }
                     className="min-h-[150px]"
                   />
@@ -380,6 +424,11 @@ export function AssignmentsClient({
                     {aiScore <= 5 ? "(human-like)" : "(Regal AI polished further if needed)"}
                   </p>
                 )}
+                <ResultActions
+                  value={result}
+                  filename={`${activeTab}-result.md`}
+                  className="mt-3"
+                />
               </CardHeader>
               <MarkdownContent content={result} />
             </Card>

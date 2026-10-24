@@ -316,8 +316,10 @@ export function GradeCalculatorTool() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setState(loadState());
-    setHydrated(true);
+    void (async () => {
+      setState(loadState());
+      setHydrated(true);
+    })();
   }, []);
 
   useEffect(() => {

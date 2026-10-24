@@ -27,6 +27,7 @@ import { useToast } from "@/components/ui/Toast";
 import { PageHeader, StatCard, EmptyState } from "@/components/ui/PageHeader";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
 import { MarkdownContent } from "@/components/ui/MarkdownContent";
+import { ResultActions } from "@/components/ui/ResultActions";
 import { cn } from "@/lib/utils";
 import type { Task, TaskPriority, TaskStatus } from "@/types";
 
@@ -496,9 +497,12 @@ export function TasksClient({ initialTasks }: { initialTasks: Task[] }) {
               <RegalAIBadge />
               <p className="text-sm font-semibold text-white">Regal AI task breakdown</p>
             </div>
-            <button type="button" onClick={() => setAiPlan(null)} className="text-muted hover:text-white">
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <ResultActions value={aiPlan} filename="study-task-help.md" />
+              <button type="button" onClick={() => setAiPlan(null)} className="text-muted hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
           <MarkdownContent content={aiPlan} />
         </Card>

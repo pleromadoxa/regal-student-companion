@@ -2,7 +2,7 @@ import type { LegalDocument, LegalSlug } from "@/lib/legal/types";
 
 const UPDATED = "July 1, 2026";
 const SERVICE = "Regal Student Companion";
-const OPERATOR = "Quantum Regal";
+const OPERATOR = "Spatial Regal";
 const SITE = "regalcompanion.cloud";
 
 export const LEGAL_DOCUMENTS: Record<LegalSlug, LegalDocument> = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Trophy,
@@ -59,10 +59,11 @@ export function AchievementVaultClient({
   openTasks: number;
 }) {
   const [local, setLocal] = useState(loadLocalAchievementStats(userId));
-
-  useEffect(() => {
+  const [prevUserId, setPrevUserId] = useState(userId);
+  if (prevUserId !== userId) {
+    setPrevUserId(userId);
     setLocal(loadLocalAchievementStats(userId));
-  }, [userId]);
+  }
 
   const evaluated = useMemo(
     () =>

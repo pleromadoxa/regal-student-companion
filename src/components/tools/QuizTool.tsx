@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Textarea, Label, Select } from "@/components/ui/Input";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
+import { ResultActions } from "@/components/ui/ResultActions";
 import { cn } from "@/lib/utils";
 import { ToolShell, ToolStat, ToolSection, ToolEmpty } from "./shared";
 
@@ -123,7 +124,9 @@ export function QuizTool() {
   const [history, setHistory] = useState<QuizHistoryEntry[]>([]);
 
   useEffect(() => {
-    setHistory(loadHistory());
+    void (async () => {
+      setHistory(loadHistory());
+    })();
   }, []);
 
   const score = useMemo(
@@ -134,6 +137,16 @@ export function QuizTool() {
   const missedQuestions = useMemo(
     () => questions.filter((q) => results[q.id] === false),
     [questions, results]
+  );
+
+  // Plain-text/markdown view of the AI-generated quiz (questions + answers)
+  // used for copy/download export.
+  const quizText = useMemo(
+    () =>
+      questions
+        .map((q, i) => `${i + 1}. ${q.question}\n\nAnswer: ${q.answer}`)
+        .join("\n\n"),
+    [questions]
   );
 
   const stats = useMemo(() => {
@@ -360,6 +373,7 @@ export function QuizTool() {
         <ToolSection
           title="Quiz mode"
           description={`Question ${currentIndex + 1} of ${questions.length}`}
+          action={<ResultActions value={quizText} filename="quiz-questions.md" />}
         >
           <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mb-4">
             <div
@@ -424,7 +438,10 @@ export function QuizTool() {
       )}
 
       {phase === "results" && (
-        <ToolSection title="Quiz complete">
+        <ToolSection
+          title="Quiz complete"
+          action={<ResultActions value={quizText} filename="quiz-questions.md" />}
+        >
           <Card className="border-regal-pink/20 text-center py-8">
             <Trophy className="w-12 h-12 text-regal-pink mx-auto mb-4" />
             <p className="text-5xl font-bold text-white tabular-nums">

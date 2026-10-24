@@ -98,7 +98,9 @@ export function ContinuousCVClient({
   }, [supabase, userId, initialEmail]);
 
   useEffect(() => {
-    void load();
+    void (async () => {
+      await load();
+    })();
   }, [load]);
 
   const saveProfile = async () => {

@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
+import { StudyScheduleStudio } from "@/components/calendar/StudyScheduleStudio";
 import { cn } from "@/lib/utils";
 import type { CalendarEvent } from "@/types";
 
@@ -97,6 +98,8 @@ export function CalendarClient({
           <Plus className="w-4 h-4" /> Add Event
         </Button>
       </div>
+
+      <StudyScheduleStudio onCreated={refresh} />
 
       {showForm && (
         <Card>

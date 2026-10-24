@@ -121,7 +121,11 @@ function FlipDigits({
   className?: string;
 }) {
   const [flip, setFlip] = useState(0);
-  useEffect(() => setFlip((f) => f + 1), [value]);
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
+    setFlip((f) => f + 1);
+  }
   return (
     <span
       key={flip}

@@ -66,6 +66,7 @@ export const REGAL_AI_ACTIONS = {
   research_summary: "research_summary",
   research_faq: "research_faq",
   research_chat: "research_chat",
+  research_answer: "research_answer",
   research_briefing: "research_briefing",
   research_timeline: "research_timeline",
   plagiarism: "plagiarism",

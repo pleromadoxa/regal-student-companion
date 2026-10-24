@@ -54,7 +54,7 @@ export function ActivityClient({
     <div className="page-enter max-w-3xl mx-auto space-y-6">
       <PageHeader
         title="Activity Log"
-        description="Your Regal Student Companion activity on Quantum Regal — separate from other Regal apps like Regal Mail."
+        description="Your Regal Student Companion activity on Spatial Regal — separate from other Regal apps like Regal Mail."
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

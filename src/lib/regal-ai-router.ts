@@ -49,6 +49,27 @@ async function callGemini(
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
+  // Current model first, then a stable fallback chain (retired models 404).
+  const models = [
+    process.env.GEMINI_MODEL,
+    "gemini-3.8-flash",
+    "gemini-2.5-flash",
+  ].filter((m, i, arr): m is string => Boolean(m) && arr.indexOf(m) === i);
+
+  for (const model of models) {
+    const text = await callGeminiModel(model, prompt, systemInstruction, image, apiKey);
+    if (text) return text;
+  }
+  return null;
+}
+
+async function callGeminiModel(
+  model: string,
+  prompt: string,
+  systemInstruction: string | undefined,
+  image: AiImageInput | undefined,
+  apiKey: string
+): Promise<string | null> {
   try {
     const parts: { text?: string; inline_data?: { mime_type: string; data: string } }[] = [];
     if (image?.base64) {
@@ -57,7 +78,7 @@ async function callGemini(
     parts.push({ text: prompt });
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,7 +98,7 @@ async function callGemini(
     );
 
     if (!res.ok) {
-      console.error("[regal-ai] Gemini error:", await res.text());
+      console.error(`[regal-ai] Gemini error (${model}):`, await res.text());
       return null;
     }
 
@@ -86,7 +107,7 @@ async function callGemini(
     };
     return data.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
   } catch (err) {
-    console.error("[regal-ai] Gemini request failed:", err);
+    console.error(`[regal-ai] Gemini request failed (${model}):`, err);
     return null;
   }
 }
@@ -191,8 +212,8 @@ export async function runRegalAI(
   const maxTokens =
     premiumModel
       ? 8192
-      : action === "course_material" || action === "essay_generate"
-        ? 4096
+      : action === "course_material" || action === "essay_generate" || action === "research_answer"
+        ? 8192
         : 2048;
 
   const cfFirst = CF_FIRST_ACTIONS.has(action);

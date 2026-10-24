@@ -32,6 +32,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
+import { ResultActions } from "@/components/ui/ResultActions";
 import { cn } from "@/lib/utils";
 
 type Note = {
@@ -79,7 +80,9 @@ export function QuickNotesTool() {
   }, [uid, supabase]);
 
   useEffect(() => {
-    if (uid) void load();
+    void (async () => {
+      if (uid) await load();
+    })();
   }, [uid, load]);
 
   const activeNote = useMemo(
@@ -478,7 +481,12 @@ export function QuickNotesTool() {
               {aiResult && aiAction && (
                 <ToolResult
                   title={aiTitles[aiAction]}
-                  actions={<RegalAIBadge />}
+                  actions={
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <RegalAIBadge />
+                      <ResultActions value={aiResult} filename="quick-notes.md" />
+                    </div>
+                  }
                 >
                   {aiResult}
                 </ToolResult>

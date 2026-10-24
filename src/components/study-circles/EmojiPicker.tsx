@@ -33,15 +33,17 @@ export function EmojiPicker({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const stored = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]") as string[];
-      setRecent(stored.slice(0, 24));
-      if (stored.length > 0) setActiveGroup("Recent");
-      else setActiveGroup("Reactions");
-    } catch {
-      setActiveGroup("Reactions");
-    }
+    void (async () => {
+      if (typeof window === "undefined") return;
+      try {
+        const stored = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]") as string[];
+        setRecent(stored.slice(0, 24));
+        if (stored.length > 0) setActiveGroup("Recent");
+        else setActiveGroup("Reactions");
+      } catch {
+        setActiveGroup("Reactions");
+      }
+    })();
   }, []);
 
   useEffect(() => {

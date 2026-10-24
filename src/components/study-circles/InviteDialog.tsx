@@ -62,7 +62,9 @@ export function InviteDialog({ circleId, circleName, onClose }: Props) {
   }, [circleId, ttlHours, limit]);
 
   useEffect(() => {
-    void generate();
+    void (async () => {
+      await generate();
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

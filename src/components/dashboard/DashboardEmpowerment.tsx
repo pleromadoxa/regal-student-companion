@@ -21,6 +21,7 @@ import type { LucideIcon } from "lucide-react";
 import { askRegalAI } from "@/lib/regal-ai";
 import { sanitizeAIContent } from "@/lib/format-ai-content";
 import type { EmpowerAction, EmpowermentBrief } from "@/lib/student-insights";
+import { ResultActions } from "@/components/ui/ResultActions";
 import { cn } from "@/lib/utils";
 
 const ICONS: Record<string, LucideIcon> = {
@@ -123,6 +124,7 @@ export function DashboardEmpowerment({
                   <Sparkles className="w-4 h-4 text-regal-pink shrink-0 mt-0.5" />
                   <p className="text-sm text-white/85 leading-relaxed">{aiBoost}</p>
                 </div>
+                <ResultActions value={aiBoost} filename="daily-boost.md" className="mt-3" />
               </div>
             )}
 

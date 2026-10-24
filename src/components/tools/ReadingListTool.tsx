@@ -236,7 +236,6 @@ export function ReadingListTool() {
 
   const fetchBooks = useCallback(async () => {
     if (!uid) return;
-    setLoading(true);
     const { data } = await supabase
       .from("companion_reading_list")
       .select("*")
@@ -247,8 +246,10 @@ export function ReadingListTool() {
   }, [uid, supabase]);
 
   useEffect(() => {
-    if (ready && uid) fetchBooks();
-    if (ready && !uid) setLoading(false);
+    void (async () => {
+      if (ready && uid) await fetchBooks();
+      if (ready && !uid) setLoading(false);
+    })();
   }, [ready, uid, fetchBooks]);
 
   const addBook = async () => {

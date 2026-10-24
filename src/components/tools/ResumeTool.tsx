@@ -236,9 +236,11 @@ export function ResumeTool() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setForm(loadDraft());
-    setVersions(loadVersions());
-    setHydrated(true);
+    void (async () => {
+      setForm(loadDraft());
+      setVersions(loadVersions());
+      setHydrated(true);
+    })();
   }, []);
 
   useEffect(() => {

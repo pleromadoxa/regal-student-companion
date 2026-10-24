@@ -91,7 +91,9 @@ export function EssayPlannerTool() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setDraft(loadDraft());
+    void (async () => {
+      setDraft(loadDraft());
+    })();
   }, []);
 
   useEffect(() => {

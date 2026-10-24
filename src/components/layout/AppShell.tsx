@@ -64,31 +64,26 @@ const ICONS = {
   ScrollText,
 } as const;
 
-export function AppShell({
-  profile,
-  isAdmin = false,
-  children,
-}: {
+type SidebarContentProps = {
+  pathname: string;
+  isAdmin: boolean;
   profile: CompanionProfile | null;
-  isAdmin?: boolean;
-  children: React.ReactNode;
-}) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const inTool = pathname.startsWith("/tools/") && pathname !== "/tools";
+  displayName: string;
+  onMobileNavigate: () => void;
+  onSignOut: () => void;
+};
 
-  const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-  };
-
-  const displayName =
-    profile?.display_name ?? profile?.email?.split("@")[0] ?? "Student";
-
-  const SidebarContent = () => (
+// Module scope (not created during render) so the sidebar subtree — including
+// NotificationBell's realtime subscription — keeps a stable identity.
+function SidebarContent({
+  pathname,
+  isAdmin,
+  profile,
+  displayName,
+  onMobileNavigate,
+  onSignOut,
+}: SidebarContentProps) {
+  return (
     <>
       <Link href="/dashboard" className="flex items-center gap-3 px-2 mb-6 group">
         <Image
@@ -126,7 +121,7 @@ export function AppShell({
       {isAdmin && (
         <Link
           href="/admin"
-          onClick={() => setMobileOpen(false)}
+          onClick={() => onMobileNavigate()}
           className={cn(
             "mb-4 flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-semibold border transition-all duration-150",
             pathname.startsWith("/admin")
@@ -141,7 +136,7 @@ export function AppShell({
 
       <Link
         href="/activity"
-        onClick={() => setMobileOpen(false)}
+        onClick={() => onMobileNavigate()}
         className={cn(
           "mb-4 flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-medium border transition-all duration-150",
           pathname === "/activity"
@@ -178,7 +173,7 @@ export function AppShell({
                     key={item.href}
                     href={item.href}
                     aria-current={active ? "page" : undefined}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => onMobileNavigate()}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150",
                       active
@@ -199,11 +194,11 @@ export function AppShell({
 
       <div className="mt-auto pt-4 border-t border-white/[0.06]">
         <p className="px-2 mb-3 text-[10px] text-muted/60 leading-relaxed">
-          © {new Date().getFullYear()} Quantum Regal. All Rights Reserved.
+          © {new Date().getFullYear()} Spatial Regal. All Rights Reserved.
         </p>
         <Link
           href="/profile"
-          onClick={() => setMobileOpen(false)}
+          onClick={() => onMobileNavigate()}
           className={cn(
             "flex items-center gap-3 px-2 mb-3 rounded-xl transition-all duration-150",
             pathname === "/profile"
@@ -223,7 +218,7 @@ export function AppShell({
           </div>
         </Link>
         <button
-          onClick={handleSignOut}
+          onClick={onSignOut}
           className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-[12px] text-muted hover:text-white hover:bg-white/[0.04] transition-all duration-150"
         >
           <LogOut className="w-3.5 h-3.5" />
@@ -232,11 +227,45 @@ export function AppShell({
       </div>
     </>
   );
+}
+
+
+export function AppShell({
+  profile,
+  isAdmin = false,
+  children,
+}: {
+  profile: CompanionProfile | null;
+  isAdmin?: boolean;
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const inTool = pathname.startsWith("/tools/") && pathname !== "/tools";
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  };
+
+  const displayName =
+    profile?.display_name ?? profile?.email?.split("@")[0] ?? "Student";
+
 
   return (
     <div className="flex min-h-screen">
       <aside className="hidden lg:flex flex-col w-[272px] shrink-0 border-r border-white/[0.06] p-4 fixed inset-y-0 left-0 bg-[#06050b] z-30">
-        <SidebarContent />
+<SidebarContent
+          pathname={pathname}
+          isAdmin={isAdmin}
+          profile={profile}
+          displayName={displayName}
+          onMobileNavigate={() => setMobileOpen(false)}
+          onSignOut={handleSignOut}
+        />
       </aside>
 
       {mobileOpen && (
@@ -246,7 +275,14 @@ export function AppShell({
             <button className="absolute top-4 right-4 text-muted hover:text-white" onClick={() => setMobileOpen(false)}>
               <X className="w-5 h-5" />
             </button>
-            <SidebarContent />
+    <SidebarContent
+          pathname={pathname}
+          isAdmin={isAdmin}
+          profile={profile}
+          displayName={displayName}
+          onMobileNavigate={() => setMobileOpen(false)}
+          onSignOut={handleSignOut}
+        />
           </aside>
         </div>
       )}

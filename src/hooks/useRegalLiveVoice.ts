@@ -63,10 +63,12 @@ export function useRegalLiveVoice({ subject, studentName, onTranscript }: UseReg
   const outputBufferRef = useRef("");
   const subjectRef = useRef(subject);
   const studentFirstNameRef = useRef(studentName?.split(/\s+/)[0] ?? "there");
-  subjectRef.current = subject;
-  if (studentName) {
-    studentFirstNameRef.current = studentName.split(/\s+/)[0] ?? studentFirstNameRef.current;
-  }
+  useEffect(() => {
+    subjectRef.current = subject;
+    if (studentName) {
+      studentFirstNameRef.current = studentName.split(/\s+/)[0] ?? studentFirstNameRef.current;
+    }
+  }, [subject, studentName]);
 
   const pushTranscript = useCallback(
     (role: "user" | "ai", text: string) => {
@@ -203,92 +205,97 @@ export function useRegalLiveVoice({ subject, studentName, onTranscript }: UseReg
 
   const beginFallbackListeningRef = useRef<() => void>(() => {});
 
-  beginFallbackListeningRef.current = () => {
-    const SpeechRecognition = getSpeechRecognition();
-    if (!SpeechRecognition) {
-      setError("Voice input not supported — try Chrome or Edge");
-      setStatus("error");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-    recognitionRef.current = recognition;
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interim = "";
-      let finalText = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) finalText += result[0].transcript;
-        else interim += result[0].transcript;
+  // Re-assigned after every render (no deps) so the callback always sees the
+  // latest state — same freshness as assigning during render, without
+  // mutating a ref in the render body.
+  useEffect(() => {
+    beginFallbackListeningRef.current = () => {
+      const SpeechRecognition = getSpeechRecognition();
+      if (!SpeechRecognition) {
+        setError("Voice input not supported — try Chrome or Edge");
+        setStatus("error");
+        return;
       }
-      setUserTranscript((finalText || interim).trim());
-      if (finalText.trim()) inputBufferRef.current = finalText.trim();
-    };
 
-    recognition.onerror = () => {
-      if (activeRef.current && !fallbackBusyRef.current) {
-        setTimeout(() => beginFallbackListeningRef.current(), 400);
-      }
-    };
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+      recognitionRef.current = recognition;
 
-    recognition.onend = () => {
-      void (async () => {
-        const question = inputBufferRef.current.trim();
-        if (!activeRef.current || !question || fallbackBusyRef.current) {
-          if (activeRef.current && !fallbackBusyRef.current) beginFallbackListeningRef.current();
-          return;
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let interim = "";
+        let finalText = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) finalText += result[0].transcript;
+          else interim += result[0].transcript;
         }
+        setUserTranscript((finalText || interim).trim());
+        if (finalText.trim()) inputBufferRef.current = finalText.trim();
+      };
 
-        fallbackBusyRef.current = true;
-        pushTranscript("user", question);
-        setStatus("thinking");
-        setAiTranscript("");
+      recognition.onerror = () => {
+        if (activeRef.current && !fallbackBusyRef.current) {
+          setTimeout(() => beginFallbackListeningRef.current(), 400);
+        }
+      };
 
-        try {
-          const { text: raw } = await askRegalAI({
-            action: "tutor",
-            question,
-            text: buildFallbackTutorContext(
-              subjectRef.current,
-              studentFirstNameRef.current,
-              question
-            ),
-            topic: subjectRef.current,
-          });
-          const reply = sanitizeAIContent(raw);
-          outputBufferRef.current = reply;
-          setAiTranscript(reply);
-          pushTranscript("ai", reply);
-          setStatus("speaking");
+      recognition.onend = () => {
+        void (async () => {
+          const question = inputBufferRef.current.trim();
+          if (!activeRef.current || !question || fallbackBusyRef.current) {
+            if (activeRef.current && !fallbackBusyRef.current) beginFallbackListeningRef.current();
+            return;
+          }
 
-          await new Promise<void>((resolve) => {
-            speakNaturally(reply, { rate: 0.94, pitch: 1.02, onEnd: resolve });
-          });
-        } catch (e) {
-          setError(e instanceof Error ? e.message : "Tutor unavailable");
-          setStatus("error");
+          fallbackBusyRef.current = true;
+          pushTranscript("user", question);
+          setStatus("thinking");
+          setAiTranscript("");
+
+          try {
+            const { text: raw } = await askRegalAI({
+              action: "tutor",
+              question,
+              text: buildFallbackTutorContext(
+                subjectRef.current,
+                studentFirstNameRef.current,
+                question
+              ),
+              topic: subjectRef.current,
+            });
+            const reply = sanitizeAIContent(raw);
+            outputBufferRef.current = reply;
+            setAiTranscript(reply);
+            pushTranscript("ai", reply);
+            setStatus("speaking");
+
+            await new Promise<void>((resolve) => {
+              speakNaturally(reply, { rate: 0.94, pitch: 1.02, onEnd: resolve });
+            });
+          } catch (e) {
+            setError(e instanceof Error ? e.message : "Tutor unavailable");
+            setStatus("error");
+            fallbackBusyRef.current = false;
+            return;
+          }
+
+          inputBufferRef.current = "";
+          setUserTranscript("");
           fallbackBusyRef.current = false;
-          return;
-        }
 
-        inputBufferRef.current = "";
-        setUserTranscript("");
-        fallbackBusyRef.current = false;
+          if (activeRef.current) {
+            setStatus("listening");
+            beginFallbackListeningRef.current();
+          }
+        })();
+      };
 
-        if (activeRef.current) {
-          setStatus("listening");
-          beginFallbackListeningRef.current();
-        }
-      })();
+      setStatus("listening");
+      recognition.start();
     };
-
-    setStatus("listening");
-    recognition.start();
-  };
+  });
 
   const start = useCallback(async () => {
     if (activeRef.current) return;

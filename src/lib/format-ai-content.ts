@@ -8,7 +8,8 @@ export function sanitizeAIContent(raw: string): string {
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/[\u2013\u2014]/g, "-")
     .replace(/[\u2022\u2023\u2043\u2219]/g, "-")
-    .replace(/\r\n/g, "\n")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[\u2028\u2029]/g, "\n")
     .trim();
 
   text = text
@@ -29,6 +30,8 @@ export function sanitizeAIContent(raw: string): string {
     /^let me know if/i,
     /^feel free to/i,
     /^please note that/i,
+    /^sure[!.,]?\s+here(?:'s| is)\b/i,
+    /^i(?:'ve| have) (?:now |)(?:prepared|crafted|created|generated)\b/i,
   ];
 
   const lines = text.split("\n").filter((line) => {
@@ -45,12 +48,37 @@ export function sanitizeAIContent(raw: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .replace(/^\s+|\s+$/g, "");
 
-  text = text.replace(
-    /([\u2600-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2700-\u27BF])/g,
-    ""
-  );
+  // Decorative characters: remove emoji, pictographs, symbols and ornaments.
+  // Deliberately preserved: ASCII, Latin accented letters (French, Spanish,
+  // etc.), « » ‹ › guillemets, °, ×, ÷, ±, ² ³, Greek letters, and CJK.
+  text = text
+    // Emoji sequences (any surrogate pair, including modifiers/keycaps),
+    // plus lone variation selectors left behind.
+    .replace(/[\uD83C-\uDBFF][\uDC00-\uDFFF]/g, "")
+    .replace(/[\uFE0E\uFE0F]/g, "")
+    .replace(/[\u20E3]/g, "")
+    // Dingbats, misc symbols, arrows, geometric shapes, block elements,
+    // ornamental digits, stars, and supplementary symbol blocks.
+    .replace(/[\u2190-\u21FF]/g, "->")
+    .replace(/[\u2600-\u27BF]/g, "")
+    .replace(/[\u25A0-\u25FF]/g, "")
+    .replace(/[\u2580-\u259F]/g, "")
+    .replace(/[\u2B00-\u2BFF]/g, "")
+    .replace(/[\u2100-\u214F]/g, (ch) => {
+      // Keep a few that carry real academic meaning.
+      const keep: Record<string, string> = {
+        "\u2103": "C", // ℃
+        "\u2109": "F", // ℉
+        "\u2113": "l", // ℓ (math)
+        "\u2116": "No.", // №
+      };
+      return keep[ch] ?? "";
+    })
+    .replace(/[\u02C0-\u02FF]/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
-  return text.trim();
+  return text;
 }
 
 /** Heuristic AI-detection likelihood (0-100). Lower is more human-like. */
@@ -61,7 +89,8 @@ export function estimateAiDetectionScore(text: string): number {
   const sentences = sample.split(/[.!?]+/).filter((s) => s.trim().length > 8);
   if (sentences.length === 0) return 50;
 
-  let score = 8;
+  // Floor of 0 so genuinely clean, human-reading text can reach a zero score.
+  let score = 0;
 
   const aiPhrases = [
     /\bfurthermore\b/gi,

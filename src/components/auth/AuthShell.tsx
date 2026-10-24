@@ -1,195 +1,274 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import {
-  ArrowLeft,
-  BookOpen,
-  Cloud,
-  GraduationCap,
-  Mail,
-  Mic,
-  Shield,
-  Sparkles,
-  Swords,
-  Zap,
-} from "lucide-react";
-import { LoginForm } from "@/components/auth/LoginForm";
-import { EducationAiScene } from "@/components/auth/EducationAiScene";
-import { USER_FACING, REGAL_AI, REGAL_CLOUD, REGAL_MAIL_URL } from "@/lib/branding";
+import { useId, useState, type ComponentProps, type ReactNode } from "react";
+import { MotionConfig, motion, type Variants } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
 
-const HIGHLIGHTS = [
-  { icon: Sparkles, label: REGAL_AI, desc: "21+ AI-powered study tools" },
-  { icon: Swords, label: "Exam War Room", desc: "Battle plans before finals" },
-  { icon: Cloud, label: REGAL_CLOUD, desc: "Sync across devices" },
-  { icon: Mic, label: "Regal Live", desc: "Real-time voice tutoring" },
-];
+/**
+ * Hero background video — plays raw, with no overlay / tint mask on top of it.
+ * Replicated exactly from Regal Cloud's Aurora auth layout.
+ */
+export const HERO_VIDEO_SRC =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260506_081238_406ed0e3-5d83-436e-a512-0bbff7ec5b95.mp4";
 
-export function AuthShell() {
+const heroContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15, delayChildren: 0.2 },
+  },
+};
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
+const stepList: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, staggerChildren: 0.15, delayChildren: 0.15 },
+  },
+};
+
+export type AuthStep = {
+  number: number;
+  text: string;
+  active?: boolean;
+};
+
+type AuthShellProps = {
+  brand?: string;
+  heroTitle: string;
+  heroDescription: string;
+  steps: AuthStep[];
+  children: ReactNode;
+};
+
+/**
+ * Two-column "Aurora" auth layout: a video hero on the left, the form on the right.
+ */
+export function AuthShell({
+  brand = "Regal Companion",
+  heroTitle,
+  heroDescription,
+  steps,
+  children,
+}: AuthShellProps) {
   return (
-    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#06050b] overflow-x-hidden">
-      {/* Left — brand & preview (desktop) */}
-      <div className="hidden lg:flex lg:w-[50%] xl:w-[52%] relative flex-col p-8 xl:p-12 overflow-hidden">
-        <div className="absolute inset-0 auth-mesh-bg" aria-hidden />
-        <div className="absolute inset-0 bg-gradient-to-br from-regal-purple-950/85 via-[#06050b]/95 to-[#06050b]" aria-hidden />
-
-        <div className="relative z-10 flex flex-col h-full">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-[13px] text-muted hover:text-white transition-colors duration-150 w-fit"
+    <MotionConfig reducedMotion="user">
+      <main className="flex min-h-screen w-full bg-black p-2 selection:bg-white/30 transition-all duration-500 lg:h-[calc(100vh-8rem)] lg:min-h-[calc(100vh-8rem)] lg:overflow-hidden lg:p-4">
+        {/* Left column — hero over a raw background video (no overlay, no tint). */}
+        <section className="relative hidden h-full w-[52%] flex-col items-center justify-end overflow-hidden rounded-3xl px-12 pb-32 shadow-2xl lg:flex">
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+            tabIndex={-1}
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to home
-          </Link>
+            <source src={HERO_VIDEO_SRC} type="video/mp4" />
+          </video>
 
-          <div className="mt-8 flex items-center gap-4">
-            <div className="relative shrink-0">
-              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-regal-purple-500/30 to-regal-pink/20 blur-md" />
-              <Image
+          <motion.div
+            variants={heroContainer}
+            initial="hidden"
+            animate="visible"
+            className="z-10 w-full max-w-xs space-y-8"
+          >
+            <motion.div variants={fadeUp} className="flex items-center gap-3">
+              <img
                 src="/logo.png"
                 alt=""
-                width={88}
-                height={88}
-                className="relative rounded-2xl shadow-2xl shadow-regal-purple-500/30"
-                priority
+                width={44}
+                height={44}
+                decoding="async"
+                className="h-11 w-11 shrink-0 rounded-xl object-contain drop-shadow-[0_4px_28px_rgba(124,58,237,0.55)]"
               />
-            </div>
-            <div>
-              <p className="font-bold text-white text-xl tracking-tight">Regal Companion</p>
-              <p className="text-[13px] text-regal-pink font-medium">Education × {REGAL_AI}</p>
-            </div>
-          </div>
+              <span className="text-xl font-semibold tracking-tight text-white">{brand}</span>
+            </motion.div>
 
-          <div className="mt-10 max-w-lg">
-            <h1 className="text-3xl xl:text-[2.65rem] font-bold text-white leading-[1.1] tracking-tight">
-              Your semester command center,{" "}
-              <span className="regal-gradient-text">powered by {REGAL_AI}</span>
-            </h1>
-            <p className="text-muted mt-5 text-[15px] leading-relaxed">
-              One Regal Mail sign-in unlocks tasks, exam prep, research, {REGAL_CLOUD}, live voice
-              tutoring, and everything you need from syllabus week to finals.
-            </p>
-          </div>
+            <motion.div variants={fadeUp} className="space-y-3">
+              <h1 className="whitespace-nowrap text-4xl font-medium tracking-tight text-white">
+                {heroTitle}
+              </h1>
+              <p className="px-4 text-sm leading-relaxed text-white/60">{heroDescription}</p>
+            </motion.div>
 
-          <div className="mt-8 grid grid-cols-2 gap-3 max-w-lg">
-            {HIGHLIGHTS.map(({ icon: Icon, label, desc }) => (
-              <div
-                key={label}
-                className="flex gap-3 p-3.5 rounded-xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm"
-              >
-                <div className="w-9 h-9 rounded-lg regal-ai-gradient flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-white truncate">{label}</p>
-                  <p className="text-[11px] text-muted leading-snug mt-0.5">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+            <motion.div variants={stepList} className="space-y-3">
+              {steps.map((step) => (
+                <motion.div key={step.number} variants={fadeUp}>
+                  <StepItem number={step.number} text={step.text} active={step.active} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+        </section>
 
-          <div className="flex-1 flex items-center py-8 min-h-0">
-            <div className="w-full max-w-xl">
-              <EducationAiScene />
-            </div>
-          </div>
+        {/* Right column — form */}
+        <section className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-12 sm:px-12 lg:px-16 lg:py-6 xl:px-24">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="my-auto w-full max-w-xl space-y-8 sm:space-y-10 lg:space-y-6"
+          >
+            {children}
+          </motion.div>
+        </section>
+      </main>
+    </MotionConfig>
+  );
+}
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted pt-4 border-t border-white/[0.06]">
-            <span className="flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-emerald-400" />
-              {USER_FACING.authSecured}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-regal-pink" />
-              Free Scholar plan
-            </span>
-            <a
-              href={REGAL_MAIL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-white transition-colors duration-150"
-            >
-              <Mail className="w-3.5 h-3.5" />
-              regalmail.me
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile header */}
-      <div className="lg:hidden relative shrink-0 overflow-hidden border-b border-white/[0.06]">
-        <div className="absolute inset-0 auth-mesh-bg opacity-50" aria-hidden />
-        <div className="relative z-10 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1 text-xs text-muted hover:text-white mb-3"
-              >
-                <ArrowLeft className="w-3 h-3" /> Home
-              </Link>
-              <div className="flex items-center gap-3">
-                <Image src="/logo.png" alt="" width={64} height={64} className="rounded-xl shadow-lg shadow-regal-purple-500/25" />
-                <div>
-                  <h1 className="text-lg font-bold text-white leading-tight tracking-tight">Sign in</h1>
-                  <p className="text-xs text-muted mt-0.5">Regal Mail students</p>
-                </div>
-              </div>
-            </div>
-            <a
-              href={REGAL_MAIL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 mt-8 px-3 py-2 rounded-xl text-xs font-medium border border-white/[0.08] text-muted hover:text-white hover:border-regal-purple-400/30 transition-all duration-150"
-            >
-              Regal Mail
-            </a>
-          </div>
-
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-            {[
-              { icon: BookOpen, text: "21+ tools" },
-              { icon: GraduationCap, text: REGAL_AI },
-              { icon: Cloud, text: REGAL_CLOUD },
-            ].map(({ icon: Icon, text }) => (
-              <span
-                key={text}
-                className="inline-flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-full text-[11px] font-medium bg-white/[0.04] border border-white/[0.08] text-white/80"
-              >
-                <Icon className="w-3 h-3 text-regal-pink" />
-                {text}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Right — form */}
-      <div className="flex-1 flex flex-col lg:justify-center relative min-h-0">
-        <div className="absolute inset-0 lg:hidden auth-mesh-bg opacity-25 pointer-events-none" aria-hidden />
-        <div className="relative z-10 flex-1 flex items-center justify-center px-4 sm:px-8 py-8 lg:py-12 pb-[max(2rem,env(safe-area-inset-bottom))]">
-          <div className="w-full max-w-[440px] page-enter">
-            <LoginForm compact />
-            <p className="text-center text-[11px] text-muted mt-6 leading-relaxed px-2">
-              By signing in you agree to our{" "}
-              <Link
-                href="/legal/terms"
-                className="text-regal-purple-300 hover:text-white underline-offset-2 hover:underline"
-              >
-                Terms
-              </Link>{" "}
-              and{" "}
-              <Link
-                href="/legal/privacy"
-                className="text-regal-purple-300 hover:text-white underline-offset-2 hover:underline"
-              >
-                Privacy Policy
-              </Link>
-              .
-            </p>
-          </div>
-        </div>
-      </div>
+export function AuthHeading({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="space-y-2">
+      <h2 className="text-3xl font-medium tracking-tight text-white">{title}</h2>
+      <p className="text-sm text-white/40">{subtitle}</p>
     </div>
+  );
+}
+
+export function AuthDivider({ label = "Or" }: { label?: string }) {
+  return (
+    <div className="relative flex w-full items-center">
+      <span className="h-px w-full border-t border-white/10" />
+      <span className="absolute left-1/2 -translate-x-1/2 bg-black px-4 text-xs font-medium uppercase tracking-widest text-white/40">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+export function StepItem({
+  number,
+  text,
+  active,
+}: {
+  number: number;
+  text: string;
+  active?: boolean;
+}) {
+  return (
+    <div
+      className={
+        active
+          ? "flex items-center gap-4 rounded-xl border border-white bg-white px-4 py-3 text-black"
+          : "flex items-center gap-4 rounded-xl border-none bg-brand-gray px-4 py-3 text-white"
+      }
+    >
+      <span
+        className={
+          active
+            ? "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-sm font-semibold text-white"
+            : "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white/40"
+        }
+      >
+        {number}
+      </span>
+      <span className="text-sm font-medium">{text}</span>
+    </div>
+  );
+}
+
+type SocialButtonProps = { icon: ReactNode; label: string } & Omit<
+  ComponentProps<"button">,
+  "children"
+>;
+
+export function SocialButton({ icon, label, className = "", ...props }: SocialButtonProps) {
+  return (
+    <button
+      type="button"
+      className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-black text-sm font-medium text-white transition-colors hover:bg-white/5 ${className}`}
+      {...props}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+type InputGroupProps = {
+  label: string;
+  placeholder?: string;
+  type?: string;
+  helperText?: string;
+  /** Rendered inside the input, anchored to the right (e.g. the password eye toggle). */
+  trailing?: ReactNode;
+} & Omit<ComponentProps<"input">, "type">;
+
+export function InputGroup({
+  label,
+  placeholder,
+  type = "text",
+  helperText,
+  trailing,
+  id,
+  className = "",
+  ...inputProps
+}: InputGroupProps) {
+  const autoId = useId();
+  const inputId = id ?? autoId;
+
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={inputId} className="block text-sm font-medium text-white">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          id={inputId}
+          type={type}
+          placeholder={placeholder}
+          className={`h-11 w-full rounded-xl border-none bg-brand-gray px-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 ${
+            trailing ? "pr-12" : ""
+          } ${className}`}
+          {...inputProps}
+        />
+        {trailing ? (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2">{trailing}</span>
+        ) : null}
+      </div>
+      {helperText ? <p className="text-[11px] text-white/40">{helperText}</p> : null}
+    </div>
+  );
+}
+
+type PasswordInputGroupProps = Omit<InputGroupProps, "type" | "trailing" | "label"> & {
+  label?: string;
+};
+
+/** Password field with a lucide `Eye` show/hide toggle pinned to the right of the input. */
+export function PasswordInputGroup({
+  label = "Password",
+  helperText = "Minimum 8 characters.",
+  ...inputProps
+}: PasswordInputGroupProps) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <InputGroup
+      label={label}
+      type={visible ? "text" : "password"}
+      helperText={helperText}
+      trailing={
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={visible ? "Hide password" : "Show password"}
+          className="text-white/40 transition-colors hover:text-white"
+        >
+          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      }
+      {...inputProps}
+    />
   );
 }

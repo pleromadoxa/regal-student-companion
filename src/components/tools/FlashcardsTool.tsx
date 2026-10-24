@@ -83,7 +83,6 @@ export function FlashcardsTool() {
 
   const loadCards = useCallback(async () => {
     if (!uid) return;
-    setLoading(true);
     const { data } = await supabase
       .from("companion_flashcards")
       .select("*")
@@ -94,8 +93,9 @@ export function FlashcardsTool() {
   }, [uid, supabase]);
 
   useEffect(() => {
-    if (ready && uid) loadCards();
-    else if (ready) setLoading(false);
+    void (async () => {
+      if (ready && uid) await loadCards();
+    })();
   }, [ready, uid, loadCards]);
 
   const decks = useMemo(() => {
@@ -132,16 +132,22 @@ export function FlashcardsTool() {
   const currentBrowseCard = filteredCards[browseIdx] ?? null;
   const currentStudyCard = studyQueue[studyIdx] ?? null;
 
-  useEffect(() => {
+  const [prevBrowseQuery, setPrevBrowseQuery] = useState<[string, string]>([
+    selectedDeck,
+    search,
+  ]);
+  if (
+    prevBrowseQuery[0] !== selectedDeck ||
+    prevBrowseQuery[1] !== search
+  ) {
+    setPrevBrowseQuery([selectedDeck, search]);
     setBrowseIdx(0);
     setSelectedIds(new Set());
-  }, [selectedDeck, search]);
+  }
 
-  useEffect(() => {
-    if (browseIdx >= filteredCards.length) {
-      setBrowseIdx(Math.max(0, filteredCards.length - 1));
-    }
-  }, [filteredCards.length, browseIdx]);
+  if (browseIdx >= filteredCards.length) {
+    setBrowseIdx(Math.max(0, filteredCards.length - 1));
+  }
 
   const addCard = async () => {
     if (!uid || !front.trim()) return;
@@ -299,7 +305,7 @@ export function FlashcardsTool() {
 
   const deckDueCount = deckCards.filter(isDue).length;
 
-  if (!ready || loading) {
+  if (!ready || (loading && uid)) {
     return (
       <Card className="py-20 flex flex-col items-center gap-3">
         <Loader2 className="w-8 h-8 text-regal-purple-300 animate-spin" />

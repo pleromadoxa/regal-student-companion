@@ -5,6 +5,8 @@ import { runRegalAI, type AiRunResult } from "@/lib/regal-ai-router";
 import {
   HUMANIZE_PROMPT,
   HUMANIZE_SYSTEM,
+  RESEARCH_ANSWER_PROMPT,
+  RESEARCH_ANSWER_SYSTEM,
   RESEARCH_BRIEFING_PROMPT,
   RESEARCH_CHAT_PROMPT,
   RESEARCH_FAQ_PROMPT,
@@ -267,6 +269,28 @@ Rules:
           regalSystemInstruction("Research chronology specialist.")
         );
         break;
+      case "research_answer": {
+        // Answer the document in place, then re-pass only while the
+        // detection estimate is clearly AI-like. Full-document rewrites are
+        // expensive and fidelity matters more than chasing 0%.
+        result = await ask(
+          RESEARCH_ANSWER_PROMPT(sources ?? "", question ?? undefined),
+          RESEARCH_ANSWER_SYSTEM
+        );
+        let score = estimateAiDetectionScore(result);
+        let pass = 0;
+        while (score > 5 && pass < 2) {
+          result = await ask(
+            `The document below already contains all correct answers. Its AI-detection estimate is ${score}%. Rewrite it to reach 0% while keeping EVERY line of the original document and every answer exactly as they are. Only vary sentence rhythm and word choice in the answers: use plain everyday academic words, mix short and long sentences, add contractions, remove any listed AI-typical words (furthermore, moreover, delve, leverage, utilize, comprehensive, robust, crucial, landscape, "it is important to note", "in conclusion"). Output the full document only, nothing else.\n\n${result}`,
+            RESEARCH_ANSWER_SYSTEM
+          );
+          score = estimateAiDetectionScore(result);
+          pass += 1;
+        }
+        result = sanitizeAIContent(result);
+        aiDetectionScore = score;
+        break;
+      }
       case "plagiarism":
         result = await ask(
           `Analyze this text for academic integrity. Return EXACTLY this markdown format:

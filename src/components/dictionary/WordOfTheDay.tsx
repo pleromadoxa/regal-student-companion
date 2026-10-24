@@ -43,7 +43,6 @@ export function WordOfTheDay({
   useEffect(() => {
     if (initialEntry) return;
     let cancelled = false;
-    setLoadingDef(true);
     fetchDictionaryEntry(word).then((result) => {
       if (!cancelled) {
         setEntry(result);

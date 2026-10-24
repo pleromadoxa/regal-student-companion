@@ -240,9 +240,34 @@ export function CallRoom({
     [displayName, removePeer, restartIceForPeer, sendSignal, upsertPeer, userId]
   );
 
-  const bootstrap = useCallback(async () => {
-    setStatus("connecting");
+  // Declared before `bootstrap`, which subscribes to participant changes.
+  const refreshParticipants = useCallback(async () => {
+    const { data } = await supabase
+      .from("companion_circle_call_participants")
+      .select("user_id, role, camera_on, mic_on, left_at")
+      .eq("call_id", call.id)
+      .is("left_at", null);
+    if (!data) return;
+    const ids = data.map((p) => p.user_id);
+    let profileMap = new Map<string, string | null>();
+    if (ids.length > 0) {
+      const { data: profiles } = await supabase
+        .from("companion_profiles")
+        .select("id, display_name")
+        .in("id", ids);
+      profileMap = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+    }
+    setParticipants(
+      data.map((p) => ({
+        ...(p as ParticipantRow),
+        display_name: profileMap.get(p.user_id) ?? null,
+      }))
+    );
+  }, [call.id, supabase]);
 
+  const bootstrap = useCallback(async () => {
+    // `status` already starts as "connecting" — no synchronous setState here
+    // (the call is only kicked off once, from the mount effect).
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
@@ -366,30 +391,6 @@ export function CallRoom({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [call.id, call.mode, displayName, isHost, supabase, userId]);
 
-  const refreshParticipants = useCallback(async () => {
-    const { data } = await supabase
-      .from("companion_circle_call_participants")
-      .select("user_id, role, camera_on, mic_on, left_at")
-      .eq("call_id", call.id)
-      .is("left_at", null);
-    if (!data) return;
-    const ids = data.map((p) => p.user_id);
-    let profileMap = new Map<string, string | null>();
-    if (ids.length > 0) {
-      const { data: profiles } = await supabase
-        .from("companion_profiles")
-        .select("id, display_name")
-        .in("id", ids);
-      profileMap = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
-    }
-    setParticipants(
-      data.map((p) => ({
-        ...(p as ParticipantRow),
-        display_name: profileMap.get(p.user_id) ?? null,
-      }))
-    );
-  }, [call.id, supabase]);
-
   const teardown = useCallback(
     async (endForAll: boolean) => {
       sendSignal({ type: "goodbye", from: userId });
@@ -418,7 +419,11 @@ export function CallRoom({
   );
 
   useEffect(() => {
-    void bootstrap();
+    // bootstrap is fully async (every setState happens after an await); awaiting
+    // it through an async boundary keeps the effect free of cascading renders.
+    void (async () => {
+      await bootstrap();
+    })();
     return () => {
       void teardown(false);
     };

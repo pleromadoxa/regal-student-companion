@@ -13,12 +13,13 @@ import {
   List,
   Clock,
   FileBarChart,
+  FileCheck,
   Lock,
   Trash2,
   Download,
   Pencil,
-  X,
   BookOpen,
+  Upload,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -29,6 +30,7 @@ import { MarkdownContent } from "@/components/ui/MarkdownContent";
 import { PageHeader, StatCard, EmptyState } from "@/components/ui/PageHeader";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
 import { downloadTextFile } from "@/lib/format-ai-content";
+import { extractDocumentText } from "@/lib/extract-document";
 import { cn } from "@/lib/utils";
 import type { ResearchProject, ResearchSource, ResearchNote } from "@/types";
 
@@ -36,6 +38,7 @@ type NoteType = ResearchNote["note_type"];
 type MobileTab = "projects" | "sources" | "generate" | "notes";
 
 const NOTE_TYPES: { id: NoteType; label: string; icon: typeof Sparkles; action: string }[] = [
+  { id: "answer", label: "Answer doc", icon: FileCheck, action: "research_answer" },
   { id: "summary", label: "Summary", icon: FileText, action: "research_summary" },
   { id: "faq", label: "FAQ", icon: List, action: "research_faq" },
   { id: "timeline", label: "Timeline", icon: Clock, action: "research_timeline" },
@@ -69,7 +72,10 @@ export function ResearchLabClient({
   const [chatQuestion, setChatQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [docUploading, setDocUploading] = useState(false);
+  const [docNotice, setDocNotice] = useState<string | null>(null);
   const [activeNoteType, setActiveNoteType] = useState<NoteType>("summary");
+  const [lastAiScore, setLastAiScore] = useState<number | null>(null);
   const [mobileTab, setMobileTab] = useState<MobileTab>("sources");
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
 
@@ -110,8 +116,11 @@ export function ResearchLabClient({
   );
 
   useEffect(() => {
-    if (initialProjects[0] && !activeProject) {
-      void loadProject(initialProjects[0]);
+    const firstProject = initialProjects[0];
+    if (firstProject && !activeProject) {
+      void (async () => {
+        await loadProject(firstProject);
+      })();
     }
   }, [initialProjects, activeProject, loadProject]);
 
@@ -202,6 +211,33 @@ export function ResearchLabClient({
     setSources((prev) => prev.filter((s) => s.id !== id));
   };
 
+  /** Upload a real document (PDF/DOCX/DOC/TXT) and load its text as a source. */
+  const handleDocFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setDocUploading(true);
+    setDocNotice(null);
+    setError(null);
+    try {
+      const extracted = await extractDocumentText(file);
+      setSourceContent(extracted.text);
+      if (!sourceTitle.trim()) {
+        setSourceTitle(file.name.replace(/\.[^.]+$/, ""));
+      }
+      setSourceType("document");
+      setDocNotice(
+        extracted.truncated
+          ? `Read ${extracted.kind.toUpperCase()} — first ${extracted.text.length.toLocaleString()} of ${extracted.charCount.toLocaleString()} characters loaded.`
+          : `Read ${extracted.kind.toUpperCase()} — ${extracted.charCount.toLocaleString()} characters loaded.`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not read that file.");
+    } finally {
+      setDocUploading(false);
+    }
+  };
+
   const deleteNote = async (id: string) => {
     await supabase.from("companion_research_notes").delete().eq("id", id);
     setNotes((prev) => {
@@ -227,11 +263,12 @@ export function ResearchLabClient({
       .join("\n\n---\n\n");
     const action = NOTE_TYPES.find((n) => n.id === noteType)?.action ?? "research_summary";
     try {
-      const { text } = await askRegalAI({
+      const { text, aiDetectionScore } = await askRegalAI({
         action,
         sources: sourcesText,
         question: chatQuestion || undefined,
       });
+      setLastAiScore(aiDetectionScore ?? null);
       const title =
         noteType === "chat"
           ? chatQuestion.slice(0, 80)
@@ -423,13 +460,48 @@ export function ResearchLabClient({
                     <Textarea placeholder="Optional notes about this URL..." value={sourceContent} onChange={(e) => setSourceContent(e.target.value)} rows={2} />
                   </>
                 ) : (
-                  <Textarea
-                    required
-                    placeholder={sourceType === "document" ? "Paste document text..." : "Paste notes..."}
-                    value={sourceContent}
-                    onChange={(e) => setSourceContent(e.target.value)}
-                    className="min-h-[80px]"
-                  />
+                  <>
+                    {sourceType === "document" && (
+                      <label
+                        className={cn(
+                          "flex items-center justify-center gap-2 p-3 border-2 border-dashed border-white/20 rounded-xl cursor-pointer text-xs text-muted hover:border-regal-purple-400/50 hover:text-white transition-colors",
+                          docUploading && "pointer-events-none opacity-60"
+                        )}
+                      >
+                        {docUploading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4" />
+                        )}
+                        {docUploading
+                          ? "Reading document..."
+                          : "Upload PDF, DOCX, DOC, or TXT (text extracted in your browser)"}
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,.txt,.md"
+                          onChange={handleDocFile}
+                          disabled={docUploading}
+                        />
+                      </label>
+                    )}
+                    {sourceType === "document" && docNotice && (
+                      <p className="text-[11px] text-emerald-200/90 bg-emerald-500/10 border border-emerald-400/20 rounded-lg px-2.5 py-1.5">
+                        {docNotice}
+                      </p>
+                    )}
+                    <Textarea
+                      required
+                      placeholder={
+                        sourceType === "document"
+                          ? "Upload a document above, or paste its text here..."
+                          : "Paste notes..."
+                      }
+                      value={sourceContent}
+                      onChange={(e) => setSourceContent(e.target.value)}
+                      className="min-h-[80px]"
+                    />
+                  </>
                 )}
                 <Button type="submit" size="sm" className="w-full">Add source</Button>
               </form>
@@ -493,6 +565,18 @@ export function ResearchLabClient({
                       View plans
                     </a>
                   </p>
+                )}
+                {lastAiScore !== null && (
+                  <div
+                    className={cn(
+                      "inline-flex items-center gap-2 mb-4 rounded-full border px-3 py-1 text-[11px] font-medium",
+                      lastAiScore === 0
+                        ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-300"
+                        : "border-amber-400/30 bg-amber-500/10 text-amber-300"
+                    )}
+                  >
+                    {lastAiScore === 0 ? "Zero AI score confirmed" : `AI detection estimate: ${lastAiScore}%`}
+                  </div>
                 )}
                 <div className="flex gap-2">
                   <Input

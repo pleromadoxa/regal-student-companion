@@ -118,21 +118,22 @@ export function BudgetTool() {
   const [category, setCategory] = useState("food");
   const [description, setDescription] = useState("");
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   const currentMonthKey = monthKey(month);
 
-  useEffect(() => {
+  const [prevMonthKey, setPrevMonthKey] = useState<string | null>(null);
+  if (prevMonthKey !== currentMonthKey) {
+    setPrevMonthKey(currentMonthKey);
     const targets = loadTargets();
     const t = targets[currentMonthKey] ?? 0;
     setTarget(t);
     setTargetInput(String(t || ""));
-  }, [currentMonthKey]);
+  }
 
   useEffect(() => {
     if (!uid) return;
-    setLoading(true);
     supabase
       .from("companion_budget_entries")
       .select("*")
@@ -450,7 +451,7 @@ export function BudgetTool() {
           ) : undefined
         }
       >
-        {loading ? (
+        {loading && uid ? (
           <Card className="py-10 text-center text-muted text-sm">Loading entries…</Card>
         ) : filteredEntries.length === 0 ? (
           <ToolEmpty

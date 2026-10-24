@@ -201,7 +201,6 @@ export function WellnessTool() {
 
   const loadLogs = useCallback(async () => {
     if (!uid) return;
-    setLoading(true);
     const since = format(subDays(new Date(), 13), "yyyy-MM-dd");
     const { data } = await supabase
       .from("companion_wellness_logs")
@@ -214,11 +213,21 @@ export function WellnessTool() {
   }, [uid]);
 
   useEffect(() => {
-    if (!uid) return;
-    loadLogs();
+    void (async () => {
+      if (uid) await loadLogs();
+    })();
   }, [uid, loadLogs]);
 
-  useEffect(() => {
+  const [prevEditSource, setPrevEditSource] = useState<{
+    date: string;
+    logs: WellnessLog[];
+  } | null>(null);
+  if (
+    !prevEditSource ||
+    prevEditSource.date !== editDate ||
+    prevEditSource.logs !== logs
+  ) {
+    setPrevEditSource({ date: editDate, logs });
     const log = logs.find((l) => l.log_date === editDate);
     if (log) {
       setSleep(Number(log.sleep_hours ?? 7));
@@ -233,7 +242,7 @@ export function WellnessTool() {
       setStress(3);
       setNotes("");
     }
-  }, [editDate, logs]);
+  }
 
   const last7Days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {

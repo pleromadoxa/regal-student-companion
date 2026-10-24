@@ -240,7 +240,9 @@ export function StudyCirclesClient({
   }, [circles, supabase]);
 
   useEffect(() => {
-    void syncLiveCalls();
+    void (async () => {
+      await syncLiveCalls();
+    })();
   }, [syncLiveCalls]);
 
   useEffect(() => {
@@ -290,8 +292,9 @@ export function StudyCirclesClient({
 
   useEffect(() => {
     if (!activeCircleId) return;
-    void loadMessages(activeCircleId);
-    void loadMembers(activeCircleId);
+    void (async () => {
+      await Promise.all([loadMessages(activeCircleId), loadMembers(activeCircleId)]);
+    })();
 
     return subscribeSafely(
       supabase,
@@ -392,35 +395,36 @@ export function StudyCirclesClient({
   }, [messages.length]);
 
   useEffect(() => {
-    if (!activeCircle?.active_call_id) {
-      setActiveCallSummary(null);
-      return;
-    }
-    const cached = liveCallsByCircle[activeCircle.id];
-    if (cached && !cached.ended_at) {
-      setActiveCallSummary(cached);
-      return;
-    }
-    const loadActiveCall = async () => {
+    void (async () => {
+      if (!activeCircle?.active_call_id) {
+        setActiveCallSummary(null);
+        return;
+      }
+      const cached = liveCallsByCircle[activeCircle.id];
+      if (cached && !cached.ended_at) {
+        setActiveCallSummary(cached);
+        return;
+      }
       const { data } = await supabase
         .from("companion_circle_calls")
         .select("*")
         .eq("id", activeCircle.active_call_id)
         .maybeSingle();
       setActiveCallSummary((data as CircleCall | null) ?? null);
-    };
-    void loadActiveCall();
+    })();
   }, [activeCircle?.active_call_id, activeCircle?.id, liveCallsByCircle, supabase]);
 
   useEffect(() => {
-    const initial = searchParams.get("circle");
-    if (initial && circles.some((c) => c.id === initial)) {
-      const target = circles.find((c) => c.id === initial);
-      if (target) {
-        setActiveCircle(target);
-        setMobileTab("chat");
+    void (async () => {
+      const initial = searchParams.get("circle");
+      if (initial && circles.some((c) => c.id === initial)) {
+        const target = circles.find((c) => c.id === initial);
+        if (target) {
+          setActiveCircle(target);
+          setMobileTab("chat");
+        }
       }
-    }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

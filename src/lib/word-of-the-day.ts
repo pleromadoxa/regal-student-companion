@@ -57,6 +57,72 @@ export function formatWordOfDayDate(date = new Date()): string {
   });
 }
 
+const DICTIONARY_API = "https://api.dictionaryapi.dev/api/v2/entries/en";
+const WIKTIONARY_API = "https://en.wiktionary.org/api/rest_v1/page/definition";
+
+/** Strip markup that Wiktionary embeds in definition text. */
+function stripMarkup(text: string): string {
+  return text
+    .replace(/<[^>]+>/g, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .trim();
+}
+
+async function fetchFromDictionaryApi(key: string): Promise<DictionaryEntry | null> {
+  const res = await fetch(`${DICTIONARY_API}/${encodeURIComponent(key)}`);
+  if (!res.ok) return null;
+  const data = (await res.json()) as Array<{
+    word: string;
+    phonetic?: string;
+    phonetics?: { text?: string }[];
+    meanings: { partOfSpeech: string; definitions: { definition: string; example?: string }[] }[];
+  }>;
+  const item = data[0];
+  if (!item?.meanings?.length) return null;
+
+  return {
+    word: item.word,
+    phonetic: item.phonetic ?? item.phonetics?.[0]?.text,
+    meanings: item.meanings.slice(0, 4).map((m) => ({
+      partOfSpeech: m.partOfSpeech,
+      definitions: m.definitions.slice(0, 3).map((d) => ({
+        definition: stripMarkup(d.definition),
+        example: d.example ? stripMarkup(d.example) : undefined,
+      })),
+    })),
+  };
+}
+
+async function fetchFromWiktionary(key: string): Promise<DictionaryEntry | null> {
+  const res = await fetch(`${WIKTIONARY_API}/${encodeURIComponent(key)}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as Record<
+    string,
+    { partOfSpeech: string; definitions: { definition: string; example?: string }[] }[]
+  >;
+  const senses = data.en;
+  if (!senses?.length) return null;
+
+  return {
+    word: key,
+    meanings: senses
+      .filter((s) => s.definitions?.length)
+      .slice(0, 4)
+      .map((s) => ({
+        partOfSpeech: s.partOfSpeech,
+        definitions: s.definitions.slice(0, 3).map((d) => ({
+          definition: stripMarkup(d.definition),
+          example: d.example ? stripMarkup(d.example) : undefined,
+        })),
+      })),
+  };
+}
+
 export async function fetchDictionaryEntry(
   word: string
 ): Promise<DictionaryEntry | null> {
@@ -74,47 +140,31 @@ export async function fetchDictionaryEntry(
     }
   }
 
+  // Primary source, then Wiktionary so a third-party outage never breaks lookup.
+  let entry: DictionaryEntry | null = null;
   try {
-    const res = await fetch(
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(key)}`
-    );
-    if (!res.ok) return null;
-    const data = (await res.json()) as Array<{
-      word: string;
-      phonetic?: string;
-      phonetics?: { text?: string }[];
-      meanings: { partOfSpeech: string; definitions: { definition: string; example?: string }[] }[];
-    }>;
-    const item = data[0];
-    const entry: DictionaryEntry = {
-      word: item.word,
-      phonetic: item.phonetic ?? item.phonetics?.[0]?.text,
-      meanings: item.meanings.map(
-        (m: {
-          partOfSpeech: string;
-          definitions: { definition: string; example?: string }[];
-        }) => ({
-          partOfSpeech: m.partOfSpeech,
-          definitions: m.definitions.slice(0, 3).map((d) => ({
-            definition: d.definition,
-            example: d.example,
-          })),
-        })
-      ),
-    };
-
-    if (typeof window !== "undefined") {
-      try {
-        sessionStorage.setItem(`dict:${key}`, JSON.stringify(entry));
-      } catch {
-        /* quota exceeded — ignore */
-      }
-    }
-
-    return entry;
+    entry = await fetchFromDictionaryApi(key);
   } catch {
-    return null;
+    entry = null;
   }
+  if (!entry) {
+    try {
+      entry = await fetchFromWiktionary(key);
+    } catch {
+      entry = null;
+    }
+  }
+  if (!entry) return null;
+
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.setItem(`dict:${key}`, JSON.stringify(entry));
+    } catch {
+      /* quota exceeded — ignore */
+    }
+  }
+
+  return entry;
 }
 
 export async function getWordOfTheDayEntry(date = new Date()) {

@@ -271,7 +271,9 @@ export function StudyPlannerTool() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
-    setHistory(loadHistory());
+    void (async () => {
+      setHistory(loadHistory());
+    })();
   }, []);
 
   const stepIndex = STEPS.findIndex((s) => s.id === step);

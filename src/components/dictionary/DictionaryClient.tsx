@@ -9,6 +9,9 @@ import {
   BookOpen,
   Sparkles,
   Plus,
+  Copy,
+  Check,
+  Clock,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -16,6 +19,14 @@ import {
   getDailySuggestedWords,
   formatWordOfDayDate,
 } from "@/lib/word-of-the-day";
+import {
+  addDictionaryHistory,
+  clearDictionaryHistory,
+  entryToClipboardText,
+  formatHistoryWhen,
+  getDictionaryHistory,
+  type DictionaryHistoryItem,
+} from "@/lib/dictionary-history";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -49,9 +60,19 @@ function DictionaryContent({
   const [bookmarks, setBookmarks] = useState(initialBookmarks);
   const [savingWord, setSavingWord] = useState<string | null>(null);
   const [suggestedBlurbs, setSuggestedBlurbs] = useState<Record<string, string>>({});
+  const [history, setHistory] = useState<DictionaryHistoryItem[]>([]);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const lookupIdRef = useRef(0);
   const skipDebounceRef = useRef(!!initialWord);
+
+  useEffect(() => {
+    // localStorage history is read once on mount; async boundary avoids a
+    // synchronous cascading render.
+    void (async () => {
+      setHistory(getDictionaryHistory());
+    })();
+  }, []);
 
   const lookupWord = useCallback(async (raw: string) => {
     const word = raw.trim();
@@ -72,6 +93,7 @@ function DictionaryContent({
     if (result) {
       setEntry(result);
       setError(null);
+      setHistory(addDictionaryHistory(result.word));
     } else {
       setEntry(null);
       setError(`No definition found for "${word}"`);
@@ -80,40 +102,45 @@ function DictionaryContent({
   }, []);
 
   useEffect(() => {
-    if (initialWord) void lookupWord(initialWord);
+    if (initialWord) {
+      void (async () => {
+        await lookupWord(initialWord);
+      })();
+    }
   }, [initialWord, lookupWord]);
 
   useEffect(() => {
     let cancelled = false;
+    void (async () => {
+      const fromBookmarks: Record<string, string> = {};
+      for (const w of suggestedWords) {
+        const bm = bookmarks.find(
+          (b) => b.word.toLowerCase() === w.toLowerCase()
+        );
+        if (bm) fromBookmarks[w] = bm.definition;
+      }
+      setSuggestedBlurbs(fromBookmarks);
 
-    const fromBookmarks: Record<string, string> = {};
-    for (const w of suggestedWords) {
-      const bm = bookmarks.find(
-        (b) => b.word.toLowerCase() === w.toLowerCase()
-      );
-      if (bm) fromBookmarks[w] = bm.definition;
-    }
-    setSuggestedBlurbs(fromBookmarks);
+      const missing = suggestedWords.filter((w) => !fromBookmarks[w]);
+      if (missing.length === 0) return;
 
-    const missing = suggestedWords.filter((w) => !fromBookmarks[w]);
-    if (missing.length === 0) return;
-
-    void Promise.all(
-      missing.map(async (w) => {
-        const result = await fetchDictionaryEntry(w);
-        const blurb = result?.meanings[0]?.definitions[0]?.definition;
-        return blurb ? ([w, blurb] as const) : null;
-      })
-    ).then((results) => {
-      if (cancelled) return;
-      setSuggestedBlurbs((prev) => {
-        const next = { ...prev };
-        for (const row of results) {
-          if (row) next[row[0]] = row[1];
-        }
-        return next;
+      void Promise.all(
+        missing.map(async (w) => {
+          const result = await fetchDictionaryEntry(w);
+          const blurb = result?.meanings[0]?.definitions[0]?.definition;
+          return blurb ? ([w, blurb] as const) : null;
+        })
+      ).then((results) => {
+        if (cancelled) return;
+        setSuggestedBlurbs((prev) => {
+          const next = { ...prev };
+          for (const row of results) {
+            if (row) next[row[0]] = row[1];
+          }
+          return next;
+        });
       });
-    });
+    })();
 
     return () => {
       cancelled = true;
@@ -128,13 +155,17 @@ function DictionaryContent({
 
     const trimmed = query.trim();
     if (trimmed.length < MIN_SEARCH_LENGTH) {
-      setEntry(null);
-      setError(null);
-      setLoading(false);
+      void (async () => {
+        setEntry(null);
+        setError(null);
+        setLoading(false);
+      })();
       return;
     }
 
-    setLoading(true);
+    void (async () => {
+      setLoading(true);
+    })();
     const timer = setTimeout(() => void lookupWord(trimmed), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [query, lookupWord]);
@@ -190,6 +221,34 @@ function DictionaryContent({
     if (!entry) return;
     if (entryBookmarked) await removeWord(entry.word);
     else await saveWord(entry);
+  };
+
+  const copyText = async (key: string, text: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setCopiedKey(key);
+      window.setTimeout(() => {
+        setCopiedKey((current) => (current === key ? null : current));
+      }, 1600);
+    } catch {
+      /* clipboard denied — ignore */
+    }
+  };
+
+  const clearHistory = () => {
+    clearDictionaryHistory();
+    setHistory([]);
   };
 
   const selectSuggestedWord = (w: string) => {
@@ -289,6 +348,46 @@ function DictionaryContent({
             </p>
           </Card>
 
+          {history.length > 0 && (
+            <Card>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-regal-purple-300" />
+                  <h3 className="text-sm font-bold text-white">Recent searches</h3>
+                  <span className="text-muted text-xs font-normal">
+                    ({history.length})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearHistory}
+                  className="text-xs text-muted hover:text-white transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {history.map((item) => (
+                  <button
+                    key={item.word.toLowerCase()}
+                    type="button"
+                    onClick={() => selectSuggestedWord(item.word)}
+                    title={`Last looked up ${formatHistoryWhen(item.at)}`}
+                    className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.04] hover:border-regal-purple-400/40 hover:bg-white/[0.07] transition-colors"
+                  >
+                    <Clock className="w-3 h-3 text-muted group-hover:text-regal-purple-300" />
+                    <span className="text-xs font-semibold text-white/85 capitalize">
+                      {item.word}
+                    </span>
+                    <span className="text-[10px] text-muted">
+                      {formatHistoryWhen(item.at)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {error && (
             <p className="text-sm text-red-300 text-center py-2">{error}</p>
           )}
@@ -306,23 +405,41 @@ function DictionaryContent({
                     </p>
                   )}
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={toggleBookmark}
-                  disabled={savingWord === entry.word}
-                >
-                  {entryBookmarked ? (
-                    <>
-                      <BookmarkCheck className="w-4 h-4 text-regal-pink" /> In
-                      my list
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-4 h-4" /> Add to my list
-                    </>
-                  )}
-                </Button>
+                <div className="flex items-start gap-2 shrink-0">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void copyText("full", entryToClipboardText(entry))}
+                    title="Copy word with all definitions"
+                  >
+                    {copiedKey === "full" ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-300" /> Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" /> Copy
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={toggleBookmark}
+                    disabled={savingWord === entry.word}
+                  >
+                    {entryBookmarked ? (
+                      <>
+                        <BookmarkCheck className="w-4 h-4 text-regal-pink" /> In
+                        my list
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" /> Add to my list
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
               <div className="mt-6 space-y-5">
                 {entry.meanings.map((m, i) => (
@@ -337,17 +454,31 @@ function DictionaryContent({
                       {m.definitions.map((d, j) => (
                         <li
                           key={j}
-                          className="text-sm text-white/90 leading-relaxed"
+                          className="group/def flex items-start gap-2 text-sm text-white/90 leading-relaxed"
                         >
-                          <span className="text-regal-purple-300 font-medium mr-2">
+                          <span className="text-regal-purple-300 font-medium mr-1">
                             {j + 1}.
                           </span>
-                          {d.definition}
-                          {d.example && (
-                            <p className="text-xs text-muted mt-1.5 italic pl-5 border-l border-white/10 ml-1">
-                              &ldquo;{d.example}&rdquo;
-                            </p>
-                          )}
+                          <span className="flex-1 min-w-0">
+                            {d.definition}
+                            {d.example && (
+                              <p className="text-xs text-muted mt-1.5 italic pl-5 border-l border-white/10 ml-1">
+                                &ldquo;{d.example}&rdquo;
+                              </p>
+                            )}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void copyText(`d:${i}:${j}`, d.definition)}
+                            title="Copy this definition"
+                            className="mt-0.5 p-1 rounded-md text-muted hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                          >
+                            {copiedKey === `d:${i}:${j}` ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-300" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5 opacity-60 group-hover/def:opacity-100" />
+                            )}
+                          </button>
                         </li>
                       ))}
                     </ol>

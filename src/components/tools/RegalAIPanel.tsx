@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea, Label, Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { RegalAIBadge } from "@/components/ui/RegalAIBadge";
+import { ResultActions } from "@/components/ui/ResultActions";
 
 export function RegalAIPanel({
   action,
@@ -62,6 +63,7 @@ export function RegalAIPanel({
       </Button>
       {result && (
         <Card>
+          <ResultActions value={result} filename="regal-ai-response.md" className="mb-3" />
           <pre className="whitespace-pre-wrap text-sm text-white/90 font-sans leading-relaxed">{result}</pre>
         </Card>
       )}
@@ -101,6 +103,9 @@ export function RegalAIChatPanel({ action = "tutor" }: { action?: string }) {
             <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${m.role === "user" ? "bg-regal-purple-500/30 text-white" : "bg-white/10 text-white/90"}`}>
               {m.role === "ai" && <RegalAIBadge className="mb-2" />}
               <pre className="whitespace-pre-wrap font-sans">{m.text}</pre>
+              {m.role === "ai" && (
+                <ResultActions value={m.text} filename="regal-ai-response.md" className="mt-2" />
+              )}
             </div>
           </div>
         ))}

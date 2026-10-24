@@ -128,16 +128,14 @@ export function StreaksTool() {
   }, []);
 
   useEffect(() => {
-    if (!uid) {
-      if (ready) setLoading(false);
-      return;
-    }
-
-    const userId = uid;
     let cancelled = false;
+    void (async () => {
+      if (!uid) {
+        if (ready) setLoading(false);
+        return;
+      }
 
-    async function load() {
-      setLoading(true);
+      const userId = uid;
       const { data } = await supabase
         .from("companion_profiles")
         .select("study_streak, last_active_date")
@@ -156,9 +154,7 @@ export function StreaksTool() {
       setLastActive(data?.last_active_date ?? null);
       setCheckins(mergedArr);
       setLoading(false);
-    }
-
-    load();
+    })();
     return () => {
       cancelled = true;
     };

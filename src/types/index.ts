@@ -2,7 +2,7 @@ export type TaskPriority = "low" | "medium" | "high";
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type AssignmentStatus = "draft" | "in_review" | "submitted" | "graded";
 export type ScanStatus = "pending" | "scanning" | "complete" | "failed";
-export type ResearchNoteType = "summary" | "faq" | "timeline" | "briefing" | "chat";
+export type ResearchNoteType = "summary" | "faq" | "timeline" | "briefing" | "chat" | "answer";
 
 export interface CompanionProfile {
   id: string;
