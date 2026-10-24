@@ -191,6 +191,17 @@ export function LoginForm() {
           </p>
         )}
 
+        <div className="flex justify-end">
+          <a
+            href={REGAL_MAIL_WEB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-white/40 transition-colors hover:text-white"
+          >
+            Forgot password?
+          </a>
+        </div>
+
         <button
           type="submit"
           disabled={
@@ -205,17 +216,6 @@ export function LoginForm() {
               ? "Sign in with Regal Mail"
               : "Email me a sign-in link"}
         </button>
-
-        <div className="flex justify-end">
-          <a
-            href={REGAL_MAIL_WEB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-white/40 transition-colors hover:text-white"
-          >
-            Forgot password?
-          </a>
-        </div>
       </form>
 
       <AuthDivider />
